@@ -1,0 +1,6 @@
+rootProject.name = 'hw-trash'
+includeFlat 'tstar-plugin'
+
+include 'trash-gw'
+include 'trash-rp'
+
