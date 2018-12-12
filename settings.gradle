@@ -3,4 +3,5 @@ includeFlat 'tstar-plugin'
 
 include 'trash-gw'
 include 'trash-rp'
+include 'trash-service'
 

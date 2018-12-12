@@ -30,6 +30,10 @@ public class Jt808ParseHandler extends BaseHandle {
         }
 
         Jt808Header header = (Jt808Header) process.parseHeader(rpTuple.getMsgBody());
+        if (header == null){
+
+            return null;
+        }
         process.parse(header.getContent(), header);
 
         return rpTuple;

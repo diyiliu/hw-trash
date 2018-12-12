@@ -12,7 +12,6 @@ import lombok.extern.slf4j.Slf4j;
 
 import java.util.ArrayList;
 import java.util.List;
-import java.util.concurrent.atomic.AtomicLong;
 
 /**
  * Description: Jt808Handler
@@ -78,7 +77,7 @@ public class Jt808Handler extends BaseUserDefinedHandler {
 
 
         // 下行自动生成得 序列号
-        int msgSerial = getMsgSerial();
+        int msgSerial = CommonUtil.getMsgSerial();
         TStarData respData = new TStarData();
         respData.setTerminalID(terminalId);
         respData.setCmdSerialNo(msgSerial);
@@ -93,7 +92,7 @@ public class Jt808Handler extends BaseUserDefinedHandler {
             bf.writeByte(0);
             bf.writeBytes(auth);
 
-            byte[] respMsg = createResp(terminalId, bf.array(), 0x8100, msgSerial);
+            byte[] respMsg = CommonUtil.jt808Response(terminalId, bf.array(), 0x8100, msgSerial);
             respData.setCmdID(0x8100);
             respData.setMsgBody(respMsg);
             context.channel().writeAndFlush(respData);
@@ -108,7 +107,7 @@ public class Jt808Handler extends BaseUserDefinedHandler {
             bf.writeShort(cmd);
             bf.writeByte(0);
 
-            byte[] respMsg = createResp(terminalId, bf.array(), 0x8001, msgSerial);
+            byte[] respMsg = CommonUtil.jt808Response(terminalId, bf.array(), 0x8001, msgSerial);
             respData.setCmdID(0x8001);
             respData.setMsgBody(respMsg);
             context.channel().writeAndFlush(respData);
@@ -117,59 +116,9 @@ public class Jt808Handler extends BaseUserDefinedHandler {
         return tStarData;
     }
 
-    /**
-     * 命令序号
-     **/
-    private AtomicLong msgSerial = new AtomicLong(0);
-
-    public int getMsgSerial() {
-        Long serial = msgSerial.incrementAndGet();
-        if (serial > 65535) {
-            msgSerial.set(0);
-            serial = msgSerial.incrementAndGet();
-        }
-
-        return serial.intValue();
-    }
-
     @Override
     public void commandReceived(ChannelHandlerContext ctx, CommandData cmd) {
 
         log.info("下行消息，终端[{}]指令[{}], 内容[{}]...", cmd.getTerminalID(), CommonUtil.toHex(cmd.getCmdID(), 4), CommonUtil.bytesToStr(cmd.getMsgBody()));
-    }
-
-    /**
-     * 生成回复指令内容
-     *
-     * @param terminal  设备ID
-     * @param content   需要下行的指令内容
-     * @param cmd       需要下行的命令ID
-     * @param serial    下行的序列号
-     * @return
-     */
-    private byte[] createResp(String terminal, byte[] content, int cmd, int serial) {
-        // 消息体长度
-        int length = content.length;
-
-        Jt808Header header = new Jt808Header();
-        // 不分包
-        header.setSplit((byte) 0);
-        // 不加密
-        header.setEncrypt(0);
-        header.setLength(length);
-        header.setTerminalId(terminal);
-        header.setContent(content);
-        header.setCmd(cmd);
-        header.setSerial(serial);
-
-        byte[] bytes = CommonUtil.jt808HeaderToContent(header);
-        byte check = CommonUtil.getCheck(bytes);
-        // 添加校验位
-        byte[] array = Unpooled.copiedBuffer(bytes, new byte[]{check}).array();
-        // 转义
-        array = CommonUtil.encoderJt808Format(array);
-
-        // 添加标识位
-        return Unpooled.copiedBuffer(new byte[]{0x7E}, array, new byte[]{0x7E}).array();
     }
 }
