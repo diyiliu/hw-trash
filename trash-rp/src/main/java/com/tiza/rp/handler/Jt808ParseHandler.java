@@ -1,7 +1,11 @@
 package com.tiza.rp.handler;
 
+import cn.com.tiza.earth4j.GisDataLoadException;
+import cn.com.tiza.earth4j.LocationParser;
+import cn.com.tiza.earth4j.entry.Location;
 import cn.com.tiza.tstar.common.process.BaseHandle;
 import cn.com.tiza.tstar.common.process.RPTuple;
+import com.alibaba.fastjson.JSON;
 import com.tiza.plugin.cache.ICache;
 import com.tiza.plugin.model.Jt808Header;
 import com.tiza.plugin.protocol.jt808.Jt808DataProcess;
@@ -30,7 +34,7 @@ public class Jt808ParseHandler extends BaseHandle {
         }
 
         Jt808Header header = (Jt808Header) process.parseHeader(rpTuple.getMsgBody());
-        if (header == null){
+        if (header == null) {
 
             return null;
         }
@@ -41,7 +45,11 @@ public class Jt808ParseHandler extends BaseHandle {
 
     @Override
     public void init() throws Exception {
-        // 装载Spring容器
+
+        // 加载地图数据，解析省市区
+        LocationParser.getInstance().init();
+
+        // 装载 Spring 容器
         SpringUtil.init();
     }
 }
