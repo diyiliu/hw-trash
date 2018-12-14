@@ -4,7 +4,6 @@ import com.tiza.plugin.bean.VehicleInfo;
 import com.tiza.plugin.cache.ICache;
 import com.tiza.plugin.model.ITask;
 import com.tiza.plugin.util.CommonUtil;
-import com.tiza.plugin.util.JacksonUtil;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.jdbc.core.JdbcTemplate;
 import org.springframework.jdbc.core.RowMapper;
@@ -34,7 +33,7 @@ public class VehicleInfoTask implements ITask {
     @Resource
     private ICache vehicleInfoProvider;
 
-    @Scheduled(fixedRate = 5 * 60 * 1000, initialDelay = 3 * 1000)
+    @Scheduled(fixedRate = 3 * 60 * 1000, initialDelay = 2 * 1000)
     public void execute() {
         log.info("刷新车辆列表 ...");
 
