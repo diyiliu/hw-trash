@@ -38,14 +38,14 @@ public class VehicleInfoTask implements ITask {
         log.info("刷新车辆列表 ...");
 
         String sql = "SELECT" +
-                "  a.ID, " +
-                "  a.MANUFACTURING_NO," +
-                "  c.TBI_TERMINAL_ID terminalid, " +
-                "  c.SIM_NO " +
+                "  a.id, " +
+                "  a.manufacturing_no," +
+                "  c.tbi_terminal_id terminalid, " +
+                "  c.sim_no " +
                 "FROM" +
                 "  veh_base_info a" +
-                " INNER JOIN re_veh_ter b ON a.ID = b.VBI_ID" +
-                " INNER JOIN ter_base_info c ON c.id = b.TBI_ID";
+                " INNER JOIN re_veh_ter b ON a.id = b.vbi_id" +
+                " INNER JOIN ter_base_info c ON c.id = b.tbi_id";
 
         List<VehicleInfo> vehicleInfos = jdbcTemplate.query(sql, new RowMapper<VehicleInfo>() {
             @Override
