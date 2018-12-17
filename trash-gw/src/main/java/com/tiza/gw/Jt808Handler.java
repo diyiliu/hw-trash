@@ -41,6 +41,11 @@ public class Jt808Handler extends BaseUserDefinedHandler {
     public TStarData handleRecvMessage(ChannelHandlerContext context, ByteBuf byteBuf) {
         byte[] bytes = new byte[byteBuf.readableBytes()];
         byteBuf.readBytes(bytes);
+        // 过滤空(垃圾)数据
+        if (bytes.length < 12){
+
+            return null;
+        }
 
         // 转义
         bytes = CommonUtil.decoderJt808Format(bytes);
@@ -58,7 +63,8 @@ public class Jt808Handler extends BaseUserDefinedHandler {
 
         byte[] array = new byte[6];
         buf.readBytes(array);
-        String terminalId = CommonUtil.bytesToStr(array);
+        // 去除前导 0
+        String terminalId = CommonUtil.bytesToStr(array).replaceFirst("^0*", "");
         int serial = buf.readUnsignedShort();
 
         buf.readBytes(new byte[length]);

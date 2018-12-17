@@ -78,4 +78,12 @@ public class TestMain {
         System.out.println(CommonUtil.bytesToStr(bytes));
     }
 
+
+    @Test
+    public void test3(){
+
+        String str = "027029947553";
+
+        System.out.println(str.replaceFirst("^0*", ""));
+    }
 }
