@@ -8,6 +8,7 @@ import com.tiza.plugin.util.JacksonUtil;
 import io.netty.buffer.ByteBuf;
 import io.netty.buffer.Unpooled;
 import lombok.extern.slf4j.Slf4j;
+import org.springframework.stereotype.Service;
 
 import java.nio.charset.Charset;
 import java.util.*;
@@ -19,8 +20,8 @@ import java.util.*;
  */
 
 @Slf4j
+@Service
 public class TrashProcess extends HwDataProcess {
-
 
     @Override
     public Header parseHeader(byte[] bytes) {

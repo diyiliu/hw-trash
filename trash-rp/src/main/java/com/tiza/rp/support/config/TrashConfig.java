@@ -52,6 +52,4 @@ public class TrashConfig {
         properties.putAll(prop);
         return new Producer(new ProducerConfig(properties));
     }
-
-
 }

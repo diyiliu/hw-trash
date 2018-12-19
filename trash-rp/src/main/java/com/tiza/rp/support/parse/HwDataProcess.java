@@ -6,8 +6,6 @@ import org.springframework.jdbc.core.JdbcTemplate;
 import org.springframework.stereotype.Service;
 
 import javax.annotation.Resource;
-import java.util.HashMap;
-import java.util.Map;
 
 /**
  * Description: HwDataProcess
@@ -21,11 +19,6 @@ public class HwDataProcess implements IDataProcess {
     @Resource
     protected JdbcTemplate jdbcTemplate;
 
-    protected String hwKey;
-
-    protected Integer vehType;
-
-    private Map<Integer, HwDataProcess> hwProcessMap = new HashMap();
 
     @Override
     public Header parseHeader(byte[] bytes) {
@@ -44,15 +37,6 @@ public class HwDataProcess implements IDataProcess {
 
     @Override
     public void init() {
-        hwProcessMap.put(vehType, this);
-    }
 
-    public HwDataProcess getDataProcess(int vehType){
-
-        return hwProcessMap.get(vehType);
-    }
-
-    public String getHwKey() {
-        return hwKey;
     }
 }

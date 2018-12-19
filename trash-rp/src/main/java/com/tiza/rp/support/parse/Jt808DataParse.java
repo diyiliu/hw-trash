@@ -9,8 +9,11 @@ import com.tiza.plugin.model.Position;
 import com.tiza.plugin.util.CommonUtil;
 import com.tiza.plugin.util.JacksonUtil;
 import com.tiza.rp.support.model.HwHeader;
+import com.tiza.rp.support.parse.process.BagProcess;
+import com.tiza.rp.support.parse.process.TrashProcess;
 import kafka.javaapi.producer.Producer;
 import kafka.producer.KeyedMessage;
+import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.lang3.StringUtils;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.jdbc.core.JdbcTemplate;
@@ -28,6 +31,7 @@ import java.util.Map;
  * Update: 2018-12-19 10:15
  */
 
+@Slf4j
 @Service
 public class Jt808DataParse implements IDataParse {
 
@@ -35,7 +39,10 @@ public class Jt808DataParse implements IDataParse {
     private ICache vehicleInfoProvider;
 
     @Resource
-    private HwDataProcess hwDataProcess;
+    private TrashProcess trashProcess;
+
+    @Resource
+    private BagProcess bagProcess;
 
     @Resource
     private JdbcTemplate jdbcTemplate;
@@ -60,8 +67,25 @@ public class Jt808DataParse implements IDataParse {
         VehicleInfo vehicleInfo = (VehicleInfo) vehicleInfoProvider.get(terminalId);
         int vehType = vehicleInfo.getVehType();
 
+        String hwType = "";
+        HwDataProcess hwDataProcess = null;
 
+        // 智能垃圾箱
+        if (vehType == binCode){
+            hwType = "trash-bin";
+            hwDataProcess = trashProcess;
+        }
 
+        // 垃圾袋发放机
+        if (vehType == bagCode){
+            hwType = "trash-bag";
+            hwDataProcess = bagProcess;
+        }
+
+        if (hwDataProcess == null){
+            log.info("设备类型异常: [{}]", vehType);
+            return;
+        }
 
         HwHeader hwHeader = (HwHeader) hwDataProcess.parseHeader(bytes);
         if (hwHeader != null) {
@@ -71,8 +95,8 @@ public class Jt808DataParse implements IDataParse {
             hwDataProcess.parse(hwHeader.getContent(), hwHeader);
             Map param = new HashMap();
             if (param != null) {
-
                 param.put("id", hwHeader.getCmd());
+                param.put("hwType", hwType);
                 param.putAll(hwHeader.getParamMap());
 
                 // 写入 kafka 准备指令下发
