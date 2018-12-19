@@ -7,6 +7,7 @@ import com.tiza.plugin.cache.ICache;
 import com.tiza.plugin.model.Jt808Header;
 import com.tiza.plugin.protocol.jt808.Jt808DataProcess;
 import com.tiza.plugin.util.CommonUtil;
+import com.tiza.plugin.util.JacksonUtil;
 import com.tiza.plugin.util.SpringUtil;
 import lombok.extern.slf4j.Slf4j;
 
@@ -26,19 +27,31 @@ public class Jt808ParseHandler extends BaseHandle {
         ICache cmdCacheProvider = SpringUtil.getBean("cmdCacheProvider");
         Jt808DataProcess process = (Jt808DataProcess) cmdCacheProvider.get(rpTuple.getCmdID());
         if (process == null) {
-            log.error("找不到指令[{}]解析器!", CommonUtil.toHex(rpTuple.getCmdID(), 4));
+            log.error("CMD {} ,不到指令[{}]解析器!", JacksonUtil.toJson(cmdCacheProvider.getKeys()), CommonUtil.toHex(rpTuple.getCmdID(), 4));
             return null;
         }
 
+        // 解析消息头
         Jt808Header header = (Jt808Header) process.parseHeader(rpTuple.getMsgBody());
-        if (header != null) {
-            header.setGwTime(rpTuple.getTime());
-            process.parse(header.getContent(), header);
+        if (header == null) {
 
-            return rpTuple;
+            return null;
         }
 
-        return null;
+        String terminalId = header.getTerminalId();
+        ICache vehicleInfoProvider = SpringUtil.getBean("vehicleInfoProvider");
+        // 验证设备是否绑定车辆
+        if (!vehicleInfoProvider.containsKey(terminalId)) {
+            log.warn("设备[{}]未绑定车辆信息!", terminalId);
+
+            return null;
+        }
+        header.setGwTime(rpTuple.getTime());
+
+        // 指令解析
+        process.parse(header.getContent(), header);
+
+        return rpTuple;
     }
 
     @Override

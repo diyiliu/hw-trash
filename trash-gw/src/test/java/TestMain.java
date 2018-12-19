@@ -1,7 +1,10 @@
 import com.tiza.gw.Jt808Decoder;
+import com.tiza.plugin.model.Jt808Header;
 import com.tiza.plugin.util.CommonUtil;
 import handler.JT808TestHandler;
 import io.netty.bootstrap.ServerBootstrap;
+import io.netty.buffer.ByteBuf;
+import io.netty.buffer.Unpooled;
 import io.netty.channel.ChannelFuture;
 import io.netty.channel.ChannelInitializer;
 import io.netty.channel.ChannelOption;
@@ -9,6 +12,7 @@ import io.netty.channel.EventLoopGroup;
 import io.netty.channel.nio.NioEventLoopGroup;
 import io.netty.channel.socket.SocketChannel;
 import io.netty.channel.socket.nio.NioServerSocketChannel;
+import lombok.extern.slf4j.Slf4j;
 import org.junit.Test;
 
 /**
@@ -16,6 +20,8 @@ import org.junit.Test;
  * Author: DIYILIU
  * Update: 2018-11-28 16:42
  */
+
+@Slf4j
 public class TestMain {
 
     public static void main(String[] args) {

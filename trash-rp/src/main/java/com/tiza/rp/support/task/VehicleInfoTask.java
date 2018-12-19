@@ -38,14 +38,11 @@ public class VehicleInfoTask implements ITask {
         log.info("刷新车辆列表 ...");
 
         String sql = "SELECT" +
-                "  a.id, " +
-                "  a.manufacturing_no," +
-                "  c.tbi_terminal_id terminalid, " +
-                "  c.sim_no " +
+                "  `a`.`id`, `c`.`tbi_terminal_id` 'terminalid', `a`.`vti_id` 'vtypeid', `a`.`manufacturing_no` 'facture'" +
                 "FROM" +
-                "  veh_base_info a" +
-                " INNER JOIN re_veh_ter b ON a.id = b.vbi_id" +
-                " INNER JOIN ter_base_info c ON c.id = b.tbi_id";
+                "  `veh_base_info` a" +
+                "    INNER JOIN `re_veh_ter` b ON `a`.`id` = `b`.`vbi_id`" +
+                "    INNER JOIN `ter_base_info` c ON `c`.`id` = `b`.`tbi_id`";
 
         List<VehicleInfo> vehicleInfos = jdbcTemplate.query(sql, new RowMapper<VehicleInfo>() {
             @Override
@@ -53,6 +50,7 @@ public class VehicleInfoTask implements ITask {
                 VehicleInfo vehicleInfo = new VehicleInfo();
                 vehicleInfo.setId(rs.getLong("id"));
                 vehicleInfo.setTerminalId(rs.getString("terminalid"));
+                vehicleInfo.setVehType(rs.getInt("vtypeid"));
 
                 return vehicleInfo;
             }

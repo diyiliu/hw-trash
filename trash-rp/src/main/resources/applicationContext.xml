@@ -8,7 +8,7 @@
            http://www.springframework.org/schema/context/spring-context.xsd ">
 
     <!-- 开启注解扫描 -->
-    <context:component-scan base-package="com.tiza.rp,com.tiza.plugin.protocol.jt808"/>
+    <context:component-scan base-package="com.tiza.rp,com.tiza.plugin.protocol.jt808.*"/>
     <!-- 加载配置文件 -->
     <context:property-placeholder location="classpath*:*.properties"/>
 
@@ -47,7 +47,6 @@
     </bean>
 
     <bean class="com.tiza.plugin.config.BaseConfig"/>
-    <bean id="hwDataProcess" class="com.tiza.plugin.protocol.hw.process.TrashProcess" />
     <!-- 指令解析初始化 -->
     <bean class="com.tiza.plugin.listener.SpringInitializer">
         <property name="protocols">

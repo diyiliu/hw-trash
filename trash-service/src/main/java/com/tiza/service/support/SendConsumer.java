@@ -2,8 +2,8 @@ package com.tiza.service.support;
 
 import cn.com.tiza.tstar.datainterface.client.TStarSimpleClient;
 import cn.com.tiza.tstar.datainterface.client.entity.ClientCmdSendResult;
-import com.tiza.plugin.protocol.hw.HwDataProcess;
-import com.tiza.plugin.protocol.hw.model.HwHeader;
+import com.tiza.rp.support.hw.HwDataProcess;
+import com.tiza.rp.support.hw.model.HwHeader;
 import com.tiza.plugin.util.CommonUtil;
 import com.tiza.plugin.util.JacksonUtil;
 import kafka.consumer.ConsumerIterator;

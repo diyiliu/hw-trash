@@ -1,4 +1,4 @@
-package com.tiza.rp.support;
+package com.tiza.rp.support.config;
 
 import kafka.javaapi.producer.Producer;
 import kafka.producer.ProducerConfig;
@@ -52,4 +52,6 @@ public class TrashConfig {
         properties.putAll(prop);
         return new Producer(new ProducerConfig(properties));
     }
+
+
 }

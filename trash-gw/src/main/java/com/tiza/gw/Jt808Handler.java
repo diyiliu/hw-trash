@@ -70,7 +70,7 @@ public class Jt808Handler extends BaseUserDefinedHandler {
         buf.readBytes(new byte[length]);
         byte check = buf.readByte();
         if (check != realCheck){
-            log.error("校验位验证失败[{}, {}]！", CommonUtil.toHex(check), CommonUtil.toHex(realCheck, 4));
+            log.error("校验位验证失败[{}, {}]！", CommonUtil.toHex(check), CommonUtil.toHex(realCheck));
             return null;
         }
 
