@@ -22,6 +22,7 @@ public class HwDataProcess implements IDataProcess {
 
     @Override
     public Header parseHeader(byte[] bytes) {
+
         return null;
     }
 

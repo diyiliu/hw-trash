@@ -74,10 +74,6 @@ public class TrashProcess extends HwDataProcess {
             }
 
             int n = buf.readByte();
-            if (buf.readableBytes() < n) {
-
-                log.error("数据长度不足: [{}]", CommonUtil.bytesToStr(content));
-            }
             int[] array = new int[n];
             for (int i = 0; i < n; i++) {
                 array[i] = buf.readByte();
@@ -96,14 +92,11 @@ public class TrashProcess extends HwDataProcess {
 
         if (0x04 == cmd) {
             int authType = buf.readByte();
+
             int length = buf.readUnsignedByte();
-            if (buf.readableBytes() < length) {
-
-                log.error("数据长度不足: [{}]", CommonUtil.bytesToStr(content));
-            }
-
             byte[] array = new byte[length];
             buf.readBytes(array);
+
             String authContent = new String(array);
 
             param.put("authType", authType);
@@ -120,10 +113,6 @@ public class TrashProcess extends HwDataProcess {
         if (0x05 == cmd) {
             int authType = buf.readByte();
             int length = buf.readUnsignedByte();
-            if (buf.readableBytes() < length) {
-
-                log.error("数据长度不足: [{}]", CommonUtil.bytesToStr(content));
-            }
 
             byte[] array = new byte[length];
             buf.readBytes(array);
@@ -133,6 +122,7 @@ public class TrashProcess extends HwDataProcess {
             if (buf.readableBytes() < n * 6) {
 
                 log.error("数据长度不足: [{}]", CommonUtil.bytesToStr(content));
+                return;
             }
 
             List list = new ArrayList();

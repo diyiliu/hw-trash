@@ -28,6 +28,9 @@ public class HwHeader extends Header {
 
     private byte endByte;
 
+    private int msgId;
+    private int readWrite;
+
     private Map paramMap;
 
     private long time;

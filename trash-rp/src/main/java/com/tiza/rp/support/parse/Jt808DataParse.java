@@ -67,18 +67,18 @@ public class Jt808DataParse implements IDataParse {
         VehicleInfo vehicleInfo = (VehicleInfo) vehicleInfoProvider.get(terminalId);
         int vehType = vehicleInfo.getVehType();
 
-        String hwType = "";
+        String trashType = "";
         HwDataProcess hwDataProcess = null;
 
         // 智能垃圾箱
         if (vehType == binCode){
-            hwType = "trash-bin";
+            trashType = "trash-bin";
             hwDataProcess = trashProcess;
         }
 
         // 垃圾袋发放机
         if (vehType == bagCode){
-            hwType = "trash-bag";
+            trashType = "trash-bag";
             hwDataProcess = bagProcess;
         }
 
@@ -90,13 +90,14 @@ public class Jt808DataParse implements IDataParse {
         HwHeader hwHeader = (HwHeader) hwDataProcess.parseHeader(bytes);
         if (hwHeader != null) {
             hwHeader.setTerminalId(terminalId);
+            // 设置网关时间
             hwHeader.setTime(jt808Header.getGwTime());
 
             hwDataProcess.parse(hwHeader.getContent(), hwHeader);
             Map param = new HashMap();
             if (param != null) {
                 param.put("id", hwHeader.getCmd());
-                param.put("hwType", hwType);
+                param.put("trashType", trashType);
                 param.putAll(hwHeader.getParamMap());
 
                 // 写入 kafka 准备指令下发

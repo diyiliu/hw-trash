@@ -46,8 +46,8 @@ public class Jt808ParseHandler extends BaseHandle {
 
             return null;
         }
-        header.setGwTime(rpTuple.getTime());
 
+        header.setGwTime(rpTuple.getTime());
         // 指令解析
         process.parse(header.getContent(), header);
 

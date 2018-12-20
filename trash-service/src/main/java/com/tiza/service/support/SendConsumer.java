@@ -2,10 +2,11 @@ package com.tiza.service.support;
 
 import cn.com.tiza.tstar.datainterface.client.TStarSimpleClient;
 import cn.com.tiza.tstar.datainterface.client.entity.ClientCmdSendResult;
-import com.tiza.rp.support.hw.HwDataProcess;
-import com.tiza.rp.support.hw.model.HwHeader;
 import com.tiza.plugin.util.CommonUtil;
 import com.tiza.plugin.util.JacksonUtil;
+import com.tiza.rp.support.model.HwHeader;
+import com.tiza.rp.support.parse.process.BagProcess;
+import com.tiza.rp.support.parse.process.TrashProcess;
 import kafka.consumer.ConsumerIterator;
 import kafka.consumer.KafkaStream;
 import kafka.javaapi.consumer.ConsumerConnector;
@@ -35,7 +36,10 @@ public class SendConsumer extends Thread {
     private TStarSimpleClient tStarClient;
 
     @Resource
-    private HwDataProcess hwDataProcess;
+    private TrashProcess trashProcess;
+
+    @Resource
+    private BagProcess bagProcess;
 
     @Override
     public void run() {
@@ -48,9 +52,10 @@ public class SendConsumer extends Thread {
         while (it.hasNext()) {
             String text = new String(it.next().message());
             log.info("消费 kafka [{}] ... ", text);
-
             try {
                 Map data = JacksonUtil.toObject(text, HashMap.class);
+
+
                 // 响应指令
                 toSend(data);
             } catch (Exception e) {
@@ -72,33 +77,41 @@ public class SendConsumer extends Thread {
     }
 
     public void toSend(Map data) throws Exception {
-        int type = hwDataProcess.getDataType();
         String terminal = (String) data.get("terminal");
+
+        String str = (String) data.get("content");
+        Map detail = (Map) data.get("data");
+        int id = (int) detail.get("id");
+
+        // 设备类型
+        String trashType = (String) detail.get("trashType");
 
         int cmd = 0x00;
         int serial = CommonUtil.getMsgSerial();
         byte[] content = null;
-        // 垃圾箱
-        if (type == 1001) {
-            String str = (String) data.get("content");
-            Map detail = (Map) data.get("data");
-            int id = (int) detail.get("id");
 
+        // 垃圾箱
+        if ("trash-bin".equals(trashType)) {
             cmd = 0x8900;
             byte[] bytes = CommonUtil.hexStringToBytes(str);
 
-            HwHeader hwHeader = (HwHeader) hwDataProcess.parseHeader(bytes);
+            HwHeader hwHeader = (HwHeader) trashProcess.parseHeader(bytes);
 
             // 通用应答
             if (0x03 == id || 0x06 == id || 0x07 == id) {
-                content = hwDataProcess.pack(hwHeader, new Object[0]);
+                content = trashProcess.pack(hwHeader, new Object[0]);
             }
 
             // 用户信息查询
             if (0x04 == id) {
                 Object[] objects = new Object[]{1, 12345678901l, "user", 10000};
-                content = hwDataProcess.pack(hwHeader, objects);
+                content = trashProcess.pack(hwHeader, objects);
             }
+        }
+
+        if ("trash-bag".equals(trashType)) {
+
+
         }
 
         if (content == null || content.length < 1) {

@@ -47,5 +47,7 @@
     </bean>
 
     <!-- 垃圾箱、垃圾袋配置 -->
-    <bean id="hwDataProcess" class="com.tiza.rp.support.parse.process.TrashProcess" />
+    <bean class="com.tiza.rp.support.parse.HwDataProcess" />
+    <bean id="trashProcess" class="com.tiza.rp.support.parse.process.TrashProcess" />
+    <bean id="bagProcess" class="com.tiza.rp.support.parse.process.BagProcess" />
 </beans>
