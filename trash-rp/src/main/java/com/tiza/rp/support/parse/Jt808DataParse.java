@@ -9,6 +9,7 @@ import com.tiza.plugin.model.Position;
 import com.tiza.plugin.util.CommonUtil;
 import com.tiza.plugin.util.JacksonUtil;
 import com.tiza.rp.support.model.HwHeader;
+import com.tiza.rp.support.model.SendData;
 import com.tiza.rp.support.parse.process.BagProcess;
 import com.tiza.rp.support.parse.process.TrashProcess;
 import kafka.javaapi.producer.Producer;
@@ -71,18 +72,18 @@ public class Jt808DataParse implements IDataParse {
         HwDataProcess hwDataProcess = null;
 
         // 智能垃圾箱
-        if (vehType == binCode){
+        if (vehType == binCode) {
             trashType = "trash-bin";
             hwDataProcess = trashProcess;
         }
 
         // 垃圾袋发放机
-        if (vehType == bagCode){
+        if (vehType == bagCode) {
             trashType = "trash-bag";
             hwDataProcess = bagProcess;
         }
 
-        if (hwDataProcess == null){
+        if (hwDataProcess == null) {
             log.info("设备类型异常: [{}]", vehType);
             return;
         }
@@ -113,15 +114,16 @@ public class Jt808DataParse implements IDataParse {
         Jt808Header jt808Header = (Jt808Header) header;
         String terminal = jt808Header.getTerminalId();
 
-        Map map = new HashMap();
-        map.put("terminal", terminal);
-        map.put("cmd", jt808Header.getCmd());
-        map.put("content", CommonUtil.bytesToStr(jt808Header.getContent()));
-        map.put("data", param);
-        map.put("timestamp", System.currentTimeMillis());
+        SendData send = new SendData();
+        send.setTerminal(terminal);
+        send.setCmd(jt808Header.getCmd());
+        send.setContent(CommonUtil.bytesToStr(jt808Header.getContent()));
+        send.setData(param);
+        send.setTime(System.currentTimeMillis());
 
-        String json = JacksonUtil.toJson(map);
+        String json = JacksonUtil.toJson(send);
         kafkaProducer.send(new KeyedMessage(sendTopic, terminal, json));
+        log.info("终端[{}]写入 kafka [{}]", terminal, json);
     }
 
     @Override

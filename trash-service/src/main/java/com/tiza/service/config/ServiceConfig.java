@@ -1,7 +1,8 @@
 package com.tiza.service.config;
 
 import cn.com.tiza.tstar.datainterface.client.TStarSimpleClient;
-import cn.com.tiza.tstar.datainterface.client.TStarStandardClient;
+import com.tiza.plugin.cache.ICache;
+import com.tiza.plugin.cache.ram.RamCacheProvider;
 import com.tiza.service.support.SendConsumer;
 import kafka.consumer.Consumer;
 import kafka.consumer.ConsumerConfig;
@@ -32,8 +33,6 @@ public class ServiceConfig {
         String zkConnect = environment.getProperty("zk.zkConnect");
         String topic = environment.getProperty("kafka.sendTopic");
 
-        String terminalType = environment.getProperty("tstaer.terminalType");
-
         // kafka 配置
         Properties props = new Properties();
         props.put("zookeeper.connect", zkConnect);
@@ -52,7 +51,6 @@ public class ServiceConfig {
         SendConsumer sendConsumer = new SendConsumer();
         sendConsumer.setSendTopic(topic);
         sendConsumer.setConsumer(consumer);
-        sendConsumer.setTerminalType(terminalType);
         sendConsumer.start();
 
         return sendConsumer;
@@ -64,5 +62,11 @@ public class ServiceConfig {
         String password = environment.getProperty("tstar.passowrd");
 
         return new TStarSimpleClient(username, password);
+    }
+
+    @Bean
+    public ICache bagOptProvider(){
+
+        return new RamCacheProvider();
     }
 }

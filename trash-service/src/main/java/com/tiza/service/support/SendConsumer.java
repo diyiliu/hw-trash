@@ -1,21 +1,28 @@
 package com.tiza.service.support;
 
 import cn.com.tiza.tstar.datainterface.client.TStarSimpleClient;
-import cn.com.tiza.tstar.datainterface.client.entity.ClientCmdSendResult;
-import com.tiza.plugin.util.CommonUtil;
+import com.tiza.plugin.cache.ICache;
+import com.tiza.plugin.util.HttpUtil;
 import com.tiza.plugin.util.JacksonUtil;
-import com.tiza.rp.support.model.HwHeader;
+import com.tiza.rp.support.model.SendData;
 import com.tiza.rp.support.parse.process.BagProcess;
 import com.tiza.rp.support.parse.process.TrashProcess;
+import com.tiza.service.support.task.BagSender;
+import com.tiza.service.support.task.TrashSender;
+import com.tiza.service.support.task.abs.SendThread;
 import kafka.consumer.ConsumerIterator;
 import kafka.consumer.KafkaStream;
 import kafka.javaapi.consumer.ConsumerConnector;
 import lombok.extern.slf4j.Slf4j;
+import org.apache.commons.lang3.StringUtils;
+import org.springframework.beans.factory.annotation.Value;
 
 import javax.annotation.Resource;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.concurrent.ExecutorService;
+import java.util.concurrent.Executors;
 
 /**
  * Description: SendConsumer
@@ -26,20 +33,50 @@ import java.util.Map;
 @Slf4j
 public class SendConsumer extends Thread {
 
+    /** 请求票据 **/
+    private static String BAG_API_TICKET;
+    /** 票据过期时间 **/
+    private static long BAG_EXPIRE_TIME;
+
     private String sendTopic;
-
     private ConsumerConnector consumer;
-
-    private String terminalType;
-
-    @Resource
-    private TStarSimpleClient tStarClient;
 
     @Resource
     private TrashProcess trashProcess;
 
     @Resource
     private BagProcess bagProcess;
+
+    @Resource
+    private TStarSimpleClient tStarClient;
+
+    @Value("${tstar.terminalType}")
+    private String terminalType;
+
+    @Value("${trash.bin.url}")
+    private String trashUrl;
+
+    @Value("${trash.bag.url}")
+    private String bagUrl;
+
+    /**
+     * 应用 ID
+     **/
+    @Value("${trash.bag.appId}")
+    private String bagAppId;
+
+    /**
+     * 应用密钥
+     **/
+    @Value("${trash.bag.appSecret}")
+    private String bagSecret;
+
+    @Resource
+    private ICache bagOptProvider;
+
+    private final ExecutorService trashThreadPool = Executors.newFixedThreadPool(3);
+
+    private final ExecutorService bagThreadPool = Executors.newFixedThreadPool(3);
 
     @Override
     public void run() {
@@ -53,11 +90,41 @@ public class SendConsumer extends Thread {
             String text = new String(it.next().message());
             log.info("消费 kafka [{}] ... ", text);
             try {
-                Map data = JacksonUtil.toObject(text, HashMap.class);
+                SendData sendData = JacksonUtil.toObject(text, SendData.class);
+                Map data = sendData.getData();
+                // 设备类型
+                String trashType = (String) data.get("trashType");
 
+                // 垃圾箱
+                if ("trash-bin".equals(trashType)) {
+                    SendThread sendThread = new TrashSender(tStarClient, trashProcess);
+                    sendThread.setTerminalType(terminalType);
+                    sendThread.setBaseUrl(trashUrl);
+                    sendThread.setData(sendData);
 
-                // 响应指令
-                toSend(data);
+                    trashThreadPool.execute(sendThread);
+                    continue;
+                }
+
+                // 垃圾箱
+                if ("trash-bag".equals(trashType)) {
+                    // 获取公共票据
+                    String ticket = getTicket();
+                    if (StringUtils.isEmpty(ticket)){
+                        log.error("获取 API票据失败!");
+                        continue;
+                    }
+
+                    BagSender bagSender = new BagSender(tStarClient, bagProcess);
+                    bagSender.setTerminalType(terminalType);
+                    bagSender.setBaseUrl(bagUrl);
+                    bagSender.setData(sendData);
+                    // 扩展参数
+                    bagSender.setTicket(ticket);
+                    bagSender.setBagOptProvider(bagOptProvider);
+
+                    bagThreadPool.execute(bagSender);
+                }
             } catch (Exception e) {
                 e.printStackTrace();
             }
@@ -72,58 +139,27 @@ public class SendConsumer extends Thread {
         this.consumer = consumer;
     }
 
-    public void setTerminalType(String terminalType) {
-        this.terminalType = terminalType;
-    }
+    /**
+     * 获取垃圾发放机第三方 API 票据
+     * @return
+     * @throws Exception
+     */
+    public String getTicket() throws Exception {
+        if (System.currentTimeMillis() > BAG_EXPIRE_TIME) {
+            Map param = new HashMap();
+            param.put("action", "ticket");
+            param.put("appid", bagAppId);
+            param.put("secret", bagSecret);
 
-    public void toSend(Map data) throws Exception {
-        String terminal = (String) data.get("terminal");
-
-        String str = (String) data.get("content");
-        Map detail = (Map) data.get("data");
-        int id = (int) detail.get("id");
-
-        // 设备类型
-        String trashType = (String) detail.get("trashType");
-
-        int cmd = 0x00;
-        int serial = CommonUtil.getMsgSerial();
-        byte[] content = null;
-
-        // 垃圾箱
-        if ("trash-bin".equals(trashType)) {
-            cmd = 0x8900;
-            byte[] bytes = CommonUtil.hexStringToBytes(str);
-
-            HwHeader hwHeader = (HwHeader) trashProcess.parseHeader(bytes);
-
-            // 通用应答
-            if (0x03 == id || 0x06 == id || 0x07 == id) {
-                content = trashProcess.pack(hwHeader, new Object[0]);
-            }
-
-            // 用户信息查询
-            if (0x04 == id) {
-                Object[] objects = new Object[]{1, 12345678901l, "user", 10000};
-                content = trashProcess.pack(hwHeader, objects);
+            String json = HttpUtil.getForString(bagUrl, param);
+            Map map = JacksonUtil.toObject(json, HashMap.class);
+            int errcode = (int) map.get("errcode");
+            if (0 == errcode) {
+                BAG_API_TICKET = (String) map.get("ticket");
+                BAG_EXPIRE_TIME = System.currentTimeMillis() + (int) map.get("expires") * 1000;
             }
         }
 
-        if ("trash-bag".equals(trashType)) {
-
-
-        }
-
-        if (content == null || content.length < 1) {
-            return;
-        }
-
-        // 生成下发指令
-        byte[] bytes = CommonUtil.jt808Response(terminal, content, cmd, CommonUtil.getMsgSerial());
-        log.info("指令下发内容[{}] ... ", CommonUtil.bytesToStr(bytes));
-
-        // TStar 指令下发
-        ClientCmdSendResult sendResult = tStarClient.cmdSend(terminalType, terminal, cmd, serial, bytes, 1);
-        log.info("TSTAR 执行结果: [{}]", sendResult.getIsSuccess() ? "成功" : "失败");
+        return BAG_API_TICKET;
     }
 }
