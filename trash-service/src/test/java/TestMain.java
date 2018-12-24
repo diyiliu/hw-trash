@@ -47,4 +47,12 @@ public class TestMain {
         byte[] bytes = CommonUtil.longToBytes(d.intValue(), 3);
         System.out.println(CommonUtil.bytesToStr(bytes));
     }
+
+
+    @Test
+    public void test4(){
+        String str = "27029947554";
+
+        System.out.println(CommonUtil.packBCD(str, 11));
+    }
 }

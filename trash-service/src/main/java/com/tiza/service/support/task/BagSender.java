@@ -37,16 +37,17 @@ public class BagSender extends SendThread {
     public void run() {
         // 实时计算解析参数
         Map data = sendData.getData();
+        String terminal = sendData.getTerminal();
         // 透传指令ID
         int id = (int) data.get("id");
 
         byte[] bytes = CommonUtil.hexStringToBytes(sendData.getContent());
         HwHeader hwHeader = (HwHeader) dataProcess.parseHeader(bytes);
+        hwHeader.setTerminalId(terminal);
 
         int cmd = 0x8900;
         int readWrite = hwHeader.getReadWrite();
 
-        String terminal = sendData.getTerminal();
         try {
             if (0x20 == readWrite) {
                 Map param = new HashMap();

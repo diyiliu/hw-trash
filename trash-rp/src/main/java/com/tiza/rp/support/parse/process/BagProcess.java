@@ -139,6 +139,7 @@ public class BagProcess extends HwDataProcess {
                 log.warn("功能编号[{}]异常!", cmd);
             }
 
+            hwHeader.setParamMap(param);
             return;
         }
     }
@@ -169,7 +170,16 @@ public class BagProcess extends HwDataProcess {
             switch (cmd) {
                 case 0x01:
                     String terminal = hwHeader.getTerminalId();
-                    bytes = CommonUtil.packBCD(terminal, 11);
+                    int strLen = terminal.length();
+                    // 截取
+                    if (strLen > 11){
+                        terminal = terminal.substring(0, 11);
+                    }
+                    // 补足
+                    if (strLen < 11){
+                        terminal = String.format("%0" + (11 - strLen) + "d", 0) + terminal;
+                    }
+                    bytes = terminal.getBytes();
 
                     break;
                 case 0x02:
@@ -181,8 +191,12 @@ public class BagProcess extends HwDataProcess {
                     if (length > 7) {
                         phone = phone.substring(0, 3) + phone.substring(length - 4, length);
                     }
+                    // 补足
+                    if (length < 7){
+                        phone = String.format("%0" + (7 - length) + "d", 0) + phone;
+                    }
 
-                    byte[] phoneBytes = CommonUtil.packBCD(phone, 7);
+                    byte[] phoneBytes = phone.getBytes();
                     byte[] balanceBytes = CommonUtil.longToBytes(balance.intValue(), 3);
 
                     byte[] nameBytes = new byte[6];
@@ -235,7 +249,6 @@ public class BagProcess extends HwDataProcess {
             }
 
             if (bytes == null || bytes.length < 1) {
-
                 return null;
             }
 
@@ -254,7 +267,7 @@ public class BagProcess extends HwDataProcess {
     }
 
     public byte[] combine(byte[] content) {
-        ByteBuf buf = Unpooled.buffer(content.length + 5);
+        ByteBuf buf = Unpooled.buffer(3 + content.length);
         buf.writeByte(0xF1);
         buf.writeByte(0x5B);
         buf.writeByte(0xB5);
