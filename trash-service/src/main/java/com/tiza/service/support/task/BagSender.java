@@ -49,9 +49,10 @@ public class BagSender extends SendThread {
         int readWrite = hwHeader.getReadWrite();
 
         try {
+            byte[] content = null;
+            int status = 2;
             if (0x20 == readWrite) {
                 Map param = new HashMap();
-                int status = 2;
 
                 CardInfo cardInfo;
                 String json;
@@ -72,15 +73,17 @@ public class BagSender extends SendThread {
                             cardInfo = JacksonUtil.toObject(json, CardInfo.class);
                             cardInfo.setCardId(userId);
                             bagOptProvider.put("user:" + terminal, cardInfo);
-                            status = 1;
+                            content = dataProcess.pack(hwHeader, cardInfo.getPhone(), cardInfo.getBalance(), cardInfo.getName());
+                        } else {
+                            // 非法用户
+                            status = 0;
                         }
-
                         break;
                     case 0x02:
                         cardInfo = (CardInfo) bagOptProvider.get("user:" + terminal);
                         if (cardInfo == null) {
                             log.error("CardInfo 信息丢失, 无法进行鉴权积分卡操作!");
-                            return;
+                            break;
                         }
                         String password = (String) data.get("password");
                         param.put("action", "authcard");
@@ -95,7 +98,21 @@ public class BagSender extends SendThread {
                         if (errcode == 0) {
                             String token = (String) map.get("token");
                             cardInfo.setToken(token);
-                            status = 1;
+                            bagOptProvider.put("user:" + terminal, cardInfo);
+                            param.clear();
+                            param.put("action", "product");
+                            param.put("ticket", ticket);
+                            param.put("devno", terminal);
+                            param.put("token", cardInfo.getToken());
+                            param.put("idcard", cardInfo.getCardId());
+
+                            json = HttpUtil.getForString(baseUrl, param);
+                            map = JacksonUtil.toObject(json, HashMap.class);
+                            errcode = (int) map.get("errcode");
+                            if (errcode == 0) {
+                                List dataList = (List) map.get("data");
+                                content = dataProcess.pack(hwHeader, dataList);
+                            }
                         }
 
                         break;
@@ -116,13 +133,12 @@ public class BagSender extends SendThread {
                             bagOptProvider.put("worker:" + terminal, token);
                             status = 1;
                         }
-
                         break;
                     case 0x04:
                         cardInfo = (CardInfo) bagOptProvider.get("user:" + terminal);
                         if (cardInfo == null) {
                             log.error("CardInfo 信息丢失, 无法进行鉴权积分卡操作!");
-                            return;
+                            break;
                         }
 
                         String bagPush = (String) data.get("bagPush");
@@ -139,7 +155,6 @@ public class BagSender extends SendThread {
                         if (errcode == 0) {
                             status = 1;
                         }
-
                         break;
                     case 0x05:
                         String workerToken = (String) bagOptProvider.get("worker:" + terminal);
@@ -157,23 +172,13 @@ public class BagSender extends SendThread {
                         if (errcode == 0) {
                             status = 1;
                         }
-
                         break;
                     default:
                         log.warn("功能编号[{}]异常!", cmd);
                 }
-
-                byte[] content = dataProcess.pack(hwHeader, status);
-                if (content != null && content.length > 1) {
-                    jt808Send(sendData.getTerminal(), cmd, CommonUtil.getMsgSerial(), content);
-                }
-
-                return;
             }
 
             if (0x40 == readWrite) {
-                byte[] content = new byte[0];
-
                 CardInfo cardInfo;
                 switch (id) {
                     case 0x01:
@@ -184,7 +189,7 @@ public class BagSender extends SendThread {
                         cardInfo = (CardInfo) bagOptProvider.get("user:" + terminal);
                         if (cardInfo == null) {
                             log.error("CardInfo 信息丢失, 无法进行读操作0x02!");
-                            return;
+                            break;
                         }
                         Object[] args = new Object[]{cardInfo.getPhone(), cardInfo.getBalance(), cardInfo.getName()};
                         content = dataProcess.pack(hwHeader, args);
@@ -194,7 +199,7 @@ public class BagSender extends SendThread {
                         cardInfo = (CardInfo) bagOptProvider.get("user:" + terminal);
                         if (cardInfo == null) {
                             log.error("CardInfo 信息丢失, 无法进行读操作0x03!");
-                            return;
+                            break;
                         }
 
                         Map param = new HashMap();
@@ -210,18 +215,17 @@ public class BagSender extends SendThread {
                         if (errcode == 0) {
                             List dataList = (List) map.get("data");
                             content = dataProcess.pack(hwHeader, dataList);
-                        }else {
-                            content = new byte[]{0};
                         }
                         break;
                     default:
                         break;
                 }
-
-                if (content != null && content.length > 1) {
-                    jt808Send(sendData.getTerminal(), cmd, CommonUtil.getMsgSerial(), content);
-                }
             }
+            if (content == null || content.length < 1) {
+                content = dataProcess.pack(hwHeader, status);
+            }
+
+            jt808Send(sendData.getTerminal(), cmd, CommonUtil.getMsgSerial(), content);
         } catch (Exception e) {
             e.printStackTrace();
         }

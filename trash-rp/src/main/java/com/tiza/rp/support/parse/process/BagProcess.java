@@ -101,13 +101,12 @@ public class BagProcess extends HwDataProcess {
 
                     List itemList = new ArrayList();
                     for (int i = 0; i < 5; i++) {
-                        String pid = pidArray[i];
                         int code = buf.getByte(i);
-                        int x = buf.getByte(5 + i);
-                        int y = buf.getByte(6 + i);
+                        int x = buf.getByte(5 + i * 2);
+                        int y = buf.getByte(6 + i * 2);
 
                         Map item = new HashMap();
-                        item.put("pid", pid);
+                        item.put("pid", pidArray[i]);
                         item.put("code", code);
                         item.put("x", x);
                         item.put("y", y);
@@ -149,34 +148,39 @@ public class BagProcess extends HwDataProcess {
     public byte[] pack(Header header, Object... argus) {
         HwHeader hwHeader = (HwHeader) header;
 
+        byte[] bytes = {2};
         int readWrite = hwHeader.getReadWrite();
         int cmd = hwHeader.getCmd();
-
-        if (0x20 == readWrite) {
-            int result = (int) argus[0];
-
-            ByteBuf buf = Unpooled.buffer(6);
-            buf.writeBytes(hwHeader.getStartBytes());
-            buf.writeByte(3);
-            buf.writeByte(0x2B);
-            buf.writeByte(hwHeader.getCmd());
-            buf.writeByte(result);
-
-            return combine(buf.array());
-        }
-
-        if (0x40 == readWrite) {
-            byte[] bytes = new byte[0];
+        if (argus != null && argus.length == 1 && argus[0] instanceof Integer) {
+            bytes = new byte[]{(byte) ((int) argus[0] & 0xff)};
+        } else if (0x20 == readWrite) {
+            switch (cmd) {
+                case 0x01:
+                    String phone = (String) argus[0];
+                    Double balance = (double) argus[1];
+                    String name = (String) argus[2];
+                    // 组装数据
+                    bytes = personDataToByteBuf(phone, balance, name).array();
+                    break;
+                case 0x02:
+                    List<Map> dataList = (List<Map>) argus[0];
+                    // 组装数据
+                    bytes = dataListToByteBuf(dataList).array();
+                    break;
+                default:
+                    break;
+            }
+        } else if (0x40 == readWrite) {
             switch (cmd) {
                 case 0x01:
                     String terminal = hwHeader.getTerminalId();
                     int strLen = terminal.length();
                     // 截取
-                    if (strLen > 11){
+                    if (strLen > 11) {
                         terminal = terminal.substring(0, 11);
                     }
                     // 补足
-                    if (strLen < 11){
+                    if (strLen < 11) {
                         terminal = String.format("%0" + (11 - strLen) + "d", 0) + terminal;
                     }
                     bytes = terminal.getBytes();
@@ -186,84 +190,91 @@ public class BagProcess extends HwDataProcess {
                     String phone = (String) argus[0];
                     Double balance = (double) argus[1];
                     String name = (String) argus[2];
-
-                    int length = phone.length();
-                    if (length > 7) {
-                        phone = phone.substring(0, 3) + phone.substring(length - 4, length);
-                    }
-                    // 补足
-                    if (length < 7){
-                        phone = String.format("%0" + (7 - length) + "d", 0) + phone;
-                    }
-
-                    byte[] phoneBytes = phone.getBytes();
-                    byte[] balanceBytes = CommonUtil.longToBytes(balance.intValue(), 3);
-
-                    byte[] nameBytes = new byte[6];
-                    name = name.substring(1);
-                    byte[] nameArray = name.getBytes(Charset.forName("GB2312"));
-                    int len = nameArray.length > 6 ? 6 : nameArray.length;
-                    System.arraycopy(nameArray, 0, nameBytes, 0, len);
                     // 组装数据
-                    bytes = Unpooled.copiedBuffer(phoneBytes, balanceBytes, nameBytes).array();
-
+                    bytes = personDataToByteBuf(phone, balance, name).array();
                     break;
                 case 0x03:
                     List<Map> dataList = (List<Map>) argus[0];
-                    Map dataMap = new HashMap();
-                    for (Map map : dataList) {
-                        String pid = (String) map.get("pid");
-                        dataMap.put(pid, map);
-                    }
-
-                    int count = pidArray.length;
-                    // 积分 + 是否可用
-                    ByteBuf priceBuf = Unpooled.buffer(count * 2 + 1);
-                    ByteBuf xyBuf = Unpooled.buffer(count * 2);
-                    int enable = 0;
-                    for (int i = 0; i < count; i++) {
-                        String pid = pidArray[i];
-                        Map item = (Map) dataMap.get(pid);
-
-                        Double price = Double.valueOf(String.valueOf(item.get("price")));
-                        priceBuf.writeShort(price.intValue());
-
-                        int status = Integer.valueOf(String.valueOf(item.get("enable")));
-                        if (status == 1) {
-                            enable |= 1 << i;
-                        }
-
-                        int x = Integer.valueOf(String.valueOf(item.get("x")));
-                        int y = Integer.valueOf(String.valueOf(item.get("y")));
-                        xyBuf.writeByte(x);
-                        xyBuf.writeByte(y);
-                    }
-                    // 加入一个字节的 可用状态
-                    priceBuf.writeByte(enable);
                     // 组装数据
-                    bytes = Unpooled.copiedBuffer(priceBuf, xyBuf).array();
+                    bytes = dataListToByteBuf(dataList).array();
 
                     break;
                 default:
                     break;
             }
 
-            if (bytes == null || bytes.length < 1) {
-                return null;
-            }
+        }
+        if (bytes == null || bytes.length < 1) {
+            return null;
+        }
+        int length = bytes.length;
+        ByteBuf buf = Unpooled.buffer(5 + length);
+        buf.writeBytes(hwHeader.getStartBytes());
+        buf.writeByte(length + 2);
+        buf.writeByte(readWrite + 11);
+        buf.writeByte(hwHeader.getCmd());
+        buf.writeBytes(bytes);
+        return combine(buf.array());
 
-            int length = bytes.length;
-            ByteBuf buf = Unpooled.buffer(5 + length);
-            buf.writeBytes(hwHeader.getStartBytes());
-            buf.writeByte(length + 2);
-            buf.writeByte(0x4B);
-            buf.writeByte(hwHeader.getCmd());
-            buf.writeBytes(bytes);
+    }
 
-            return combine(buf.array());
+    private ByteBuf personDataToByteBuf(String phone, Double balance, String name) {
+        int length = phone.length();
+        if (length > 7) {
+            phone = phone.substring(0, 3) + phone.substring(length - 4, length);
+        }
+        // 补足
+        if (length < 7) {
+            phone = String.format("%0" + (7 - length) + "d", 0) + phone;
         }
 
-        return null;
+        byte[] phoneBytes = phone.getBytes();
+        byte[] balanceBytes = CommonUtil.longToBytes(balance.intValue(), 3);
+
+        byte[] nameBytes = new byte[6];
+        name = name.substring(1);
+        byte[] nameArray = name.getBytes(Charset.forName("GB2312"));
+        int len = nameArray.length > 6 ? 6 : nameArray.length;
+        System.arraycopy(nameArray, 0, nameBytes, 0, len);
+        // 组装数据
+        return Unpooled.copiedBuffer(new byte[]{1}, phoneBytes, balanceBytes, nameBytes);
+    }
+
+
+    private ByteBuf dataListToByteBuf(List<Map> dataList) {
+        Map dataMap = new HashMap();
+        for (Map map : dataList) {
+            String pid = (String) map.get("pid");
+            dataMap.put(pid, map);
+        }
+
+        int count = pidArray.length;
+        // 积分 + 是否可用
+        ByteBuf priceBuf = Unpooled.buffer(count * 2 + 2);
+        ByteBuf xyBuf = Unpooled.buffer(count * 2);
+        int enable = 0;
+        priceBuf.writeByte(1);//密码正确
+        for (int i = 0; i < count; i++) {
+            String pid = pidArray[i];
+            Map item = (Map) dataMap.get(pid);
+
+            Double price = Double.valueOf(String.valueOf(item.get("price")));
+            priceBuf.writeShort(price.intValue());
+
+            int status = Integer.valueOf(String.valueOf(item.get("enable")));
+            if (status == 1) {
+                enable |= 1 << i;
+            }
+
+            int x = Integer.valueOf(String.valueOf(item.get("x")));
+            int y = Integer.valueOf(String.valueOf(item.get("y")));
+            xyBuf.writeByte(x);
+            xyBuf.writeByte(y);
+        }
+        // 加入一个字节的 可用状态
+        priceBuf.writeByte(enable);
+        // 组装数据
+        return Unpooled.copiedBuffer(priceBuf, xyBuf);
     }
 
     public byte[] combine(byte[] content) {
