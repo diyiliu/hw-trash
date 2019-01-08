@@ -36,3 +36,39 @@ dependencies {
 tasks.withType(JavaCompile) {
     options.encoding = "UTF-8"
 }
+
+// 打包jar 主函数
+jar {
+  archiveName = 'hw-service.jar'
+
+    manifest {
+        attributes(
+                'Main-Class': 'com.tiza.service.Main'
+        )
+    }
+
+    // '胖'打包（包含所有jar）
+    from {
+        configurations.compile.collect {
+            it.isDirectory() ? it : zipTree(it)
+        }
+    }
+}
+
+buildscript {
+    repositories {
+        jcenter()
+    }
+    dependencies {
+        classpath 'com.github.jengelman.gradle.plugins:shadow:2.0.2'
+    }
+}
+apply plugin: 'com.github.johnrengelman.shadow'
+
+
+shadowJar {
+    baseName = 'hw-service'
+    classifier = null
+    version = null
+    mergeServiceFiles('META-INF/spring.*')
+}

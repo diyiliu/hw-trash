@@ -40,13 +40,13 @@ public class TrashConfig {
         // -1是所有in-sync replicas接受到消息时的反馈
         prop.put("request.required.acks", "1");
         // 内部发送数据是异步还是同步 sync：同步, 默认 async：异步
-        prop.put("producer.type", "async");
+        prop.put("producer.type", "sync");
         // 重试次数
         prop.put("message.send.max.retries", "3");
-        // 异步提交的时候(async)，并发提交的记录数
-        prop.put("batch.num.messages", "200");
-        // 设置缓冲区大小，默认10KB
-        prop.put("send.buffer.bytes", "102400");
+//        // 异步提交的时候(async)，并发提交的记录数
+//        prop.put("batch.num.messages", "200");
+//        // 设置缓冲区大小，默认10KB
+//        prop.put("send.buffer.bytes", "102400");
 
         Properties properties = new Properties();
         properties.putAll(prop);
