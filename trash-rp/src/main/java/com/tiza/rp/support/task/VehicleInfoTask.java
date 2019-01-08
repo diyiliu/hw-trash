@@ -37,20 +37,24 @@ public class VehicleInfoTask implements ITask {
     public void execute() {
         log.info("刷新车辆列表 ...");
 
-        String sql = "SELECT" +
-                "  `a`.`id`, `c`.`tbi_terminal_id` 'terminalid', `a`.`vti_id` 'vtypeid', `a`.`manufacturing_no` 'facture'" +
-                "FROM" +
-                "  `veh_base_info` a" +
-                "    INNER JOIN `re_veh_ter` b ON `a`.`id` = `b`.`vbi_id`" +
-                "    INNER JOIN `ter_base_info` c ON `c`.`id` = `b`.`tbi_id`";
+        String sql = "SELECT   " +
+                "  `d`.`id` vehid,  " +
+                "  `t`.`terminal_no` terminal,  " +
+                "  `d`.`hardware_type` vehtype   " +
+                "FROM  " +
+                "  `biz_terminal` t   " +
+                "  INNER JOIN `biz_device` d   " +
+                "    ON `d`.`terminal_no` = `t`.`terminal_no`   " +
+                "    AND `d`.`is_deleted` = 0   " +
+                "WHERE `t`.`is_deleted` = 0 ";
 
         List<VehicleInfo> vehicleInfos = jdbcTemplate.query(sql, new RowMapper<VehicleInfo>() {
             @Override
             public VehicleInfo mapRow(ResultSet rs, int rowNum) throws SQLException {
                 VehicleInfo vehicleInfo = new VehicleInfo();
-                vehicleInfo.setId(rs.getLong("id"));
-                vehicleInfo.setTerminalId(rs.getString("terminalid"));
-                vehicleInfo.setVehType(rs.getInt("vtypeid"));
+                vehicleInfo.setId(rs.getLong("vehid"));
+                vehicleInfo.setTerminalId(rs.getString("terminal"));
+                vehicleInfo.setVehType(rs.getInt("vehtype"));
 
                 return vehicleInfo;
             }

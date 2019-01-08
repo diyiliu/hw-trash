@@ -138,23 +138,19 @@ public class Jt808DataParse implements IDataParse {
         VehicleInfo vehicleInfo = (VehicleInfo) vehicleInfoProvider.get(jt808Header.getTerminalId());
 
         Object[] args = new Object[]{position.getLng(), position.getLat(), position.getProvince(), position.getCity(), position.getArea(),
-                position.getProCode(), position.getCityCode(), position.getAreaCode(),
                 new Date(position.getTime()), new Date(), vehicleInfo.getId()};
 
-        String sql = "UPDATE veh_current_position " +
+        String sql = "UPDATE serv_device_position " +
                 "SET " +
-                " VCP_SHIFT_LON = ?," +
-                " VCP_SHIFT_LAT = ?," +
-                " VCP_PROVINCE = ?," +
-                " VCP_CITY = ?," +
-                " VCP_AREA = ?, " +
-                " VCP_PROVINCE_CODE = ?," +
-                " VCP_CITY_CODE = ?," +
-                " VCP_AREA_CODE = ?," +
-                " VCP_GPS_TIME= ?," +
-                " MODIFY_TIME = ?" +
+                " longitude = ?," +
+                " latitude = ?," +
+                " province = ?," +
+                " city = ?, " +
+                " area = ?, " +
+                " gps_time= ?," +
+                " modified_date = ?" +
                 "WHERE " +
-                "VBI_ID = ?";
+                "device_id = ?";
 
         sendToDb(sql, args);
     }
@@ -167,7 +163,7 @@ public class Jt808DataParse implements IDataParse {
     public void updateVehicleInfo(HwHeader hwHeader) {
         VehicleInfo vehicleInfo = (VehicleInfo) vehicleInfoProvider.get(hwHeader.getTerminalId());
 
-        String sql = "SELECT t.work_param FROM veh_current_position t WHERE t.vbi_id=" + vehicleInfo.getId();
+        String sql = "SELECT t.data_json  FROM serv_device_position t WHERE t.device_id=" + vehicleInfo.getId();
         String json = jdbcTemplate.queryForObject(sql, String.class);
 
         // 工况参数
@@ -184,12 +180,12 @@ public class Jt808DataParse implements IDataParse {
 
         json = JacksonUtil.toJson(workMap);
         Object[] args = new Object[]{json, new Date(), vehicleInfo.getId()};
-        sql = "UPDATE veh_current_position " +
+        sql = "UPDATE serv_device_position " +
                 "SET " +
-                " work_param = ?," +
-                " modify_time = ?" +
+                " data_json = ?, " +
+                " modified_date = ? " +
                 "WHERE " +
-                "vbi_id = ?";
+                "device_id = ?";
 
         sendToDb(sql, args);
     }

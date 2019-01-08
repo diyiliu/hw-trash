@@ -40,6 +40,8 @@ public class Jt808ParseHandler extends BaseHandle {
 
         String terminalId = header.getTerminalId();
         ICache vehicleInfoProvider = SpringUtil.getBean("vehicleInfoProvider");
+
+        //log.info("设备缓存: {}", JacksonUtil.toJson(vehicleInfoProvider.getKeys()));
         // 验证设备是否绑定车辆
         if (!vehicleInfoProvider.containsKey(terminalId)) {
             log.warn("设备[{}]未绑定车辆信息!", terminalId);

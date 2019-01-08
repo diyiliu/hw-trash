@@ -84,7 +84,7 @@ public class TrashProcess extends HwDataProcess {
             hwHeader.setParamMap(param);
 
             Object[] args = new Object[]{terminalId, temp, JacksonUtil.toJson(array), gwTime};
-            String sql = "INSERT INTO veh_work_param_log (ter_no, temperature, work_param, gw_time) VALUES (?, ?, ?, ?)";
+            String sql = "INSERT INTO trashcan_work_param_log(ter_no, temperature, work_param, gw_time) VALUES (?, ?, ?, ?)";
             jdbcTemplate.update(sql, args);
 
             return;
@@ -104,7 +104,7 @@ public class TrashProcess extends HwDataProcess {
             hwHeader.setParamMap(param);
 
             Object[] args = new Object[]{terminalId, authType, authContent, gwTime};
-            String sql = "INSERT INTO veh_card_log (ter_no, auth_type, auth_content, gw_time) VALUES (?, ?, ?, ?)";
+            String sql = "INSERT INTO trashcan_card_log(ter_no, auth_type, auth_content, gw_time) VALUES (?, ?, ?, ?)";
             jdbcTemplate.update(sql, args);
 
             return;
@@ -145,7 +145,7 @@ public class TrashProcess extends HwDataProcess {
             hwHeader.setParamMap(param);
 
             Object[] args = new Object[]{terminalId, authType, authContent, n, JacksonUtil.toJson(list), gwTime};
-            String sql = "INSERT INTO veh_card_pick_log (ter_no, auth_type, auth_content, channel_count, pick_content, gw_time) VALUES (?, ?, ?, ?, ?, ?)";
+            String sql = "INSERT INTO trashcan_card_pick_log(ter_no, auth_type, auth_content, channel_count, pick_content, gw_time) VALUES (?, ?, ?, ?, ?, ?)";
             jdbcTemplate.update(sql, args);
 
             return;
@@ -167,7 +167,7 @@ public class TrashProcess extends HwDataProcess {
             hwHeader.setParamMap(param);
 
             Object[] args = new Object[]{terminalId, n, JacksonUtil.toJson(array), gwTime};
-            String sql = "INSERT INTO veh_fault_log (ter_no, channel_count, fault_content, gw_time) VALUES (?, ?, ?, ?)";
+            String sql = "INSERT INTO trashcan_fault_log(ter_no, channel_count, fault_content, gw_time) VALUES (?, ?, ?, ?)";
             jdbcTemplate.update(sql, args);
 
             return;
