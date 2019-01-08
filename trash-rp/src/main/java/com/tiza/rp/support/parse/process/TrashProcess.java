@@ -215,7 +215,7 @@ public class TrashProcess extends HwDataProcess {
             int status = (int) argus[0];
             int money = (int) argus[1];
 
-            ByteBuf buf = Unpooled.buffer(9);
+            ByteBuf buf = Unpooled.buffer(10);
             buf.writeBytes(startBytes);
             buf.writeByte(cmd);
             buf.writeByte(5);
