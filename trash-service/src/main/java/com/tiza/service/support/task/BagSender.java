@@ -182,7 +182,7 @@ public class BagSender extends SendThread {
                 CardInfo cardInfo;
                 switch (id) {
                     case 0x01:
-                        content = dataProcess.pack(hwHeader, null);
+                        content = dataProcess.pack(hwHeader, new Object[0]);
 
                         break;
                     case 0x02:

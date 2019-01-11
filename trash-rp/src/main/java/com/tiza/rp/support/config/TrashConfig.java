@@ -31,7 +31,7 @@ public class TrashConfig {
     public Producer kafkaProducer(){
         Map prop = new HashMap();
         // kafka 集群
-        prop.put("metadata.broker.list", "xg153:9092,xg154:9092,xg155:9092");
+        prop.put("metadata.broker.list", brokerList);
         // 消息传递到broker时的序列化方式
         prop.put("serializer.class", StringEncoder.class.getName());
         // 是否获取反馈

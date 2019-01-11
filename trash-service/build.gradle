@@ -11,7 +11,7 @@ repositories {
     jcenter()
 }
 
-ext{
+ext {
     springVersion = "4.1.3.RELEASE"
 }
 
@@ -20,12 +20,12 @@ dependencies {
     compile project(':tstar-plugin')
     compile fileTree(dir: project(':tstar-plugin').projectDir.path + "/libs/tstar-datainterface/tstar-datainterface-client", include: "*.jar")
     compile fileTree(dir: project(':tstar-plugin').projectDir.path + "/libs/tstar-datainterface/tstar-datainterface-service", include: "**/*.jar")
-    
-    compile group: 'org.springframework', name: 'spring-core', version:"$springVersion"
-    compile group: 'org.springframework', name: 'spring-context', version:"$springVersion"
+
+    compile group: 'org.springframework', name: 'spring-core', version: "$springVersion"
+    compile group: 'org.springframework', name: 'spring-context', version: "$springVersion"
     compile group: 'com.alibaba', name: 'druid', version: '1.1.12'
 
-    compile (group: 'org.apache.kafka', name: 'kafka_2.10', version: '0.8.2.2'){
+    compile(group: 'org.apache.kafka', name: 'kafka_2.10', version: '0.8.2.2') {
         exclude group: 'org.slf4j'
     }
 
@@ -39,36 +39,28 @@ tasks.withType(JavaCompile) {
 
 // 打包jar 主函数
 jar {
-  archiveName = 'hw-service.jar'
+    archiveName = 'trash-service.jar'
 
     manifest {
         attributes(
-                'Main-Class': 'com.tiza.service.Main'
+                'Main-Class': 'com.tiza.service.Main',
+                'Class-Path': 'config/ dist/' + configurations.compile.collect { it.name }.join(' dist/')
         )
     }
 
-    // '胖'打包（包含所有jar）
-    from {
-        configurations.compile.collect {
-            it.isDirectory() ? it : zipTree(it)
-        }
-    }
+    // 过滤所有配置文件
+//    sourceSets {
+//        main {
+//            resources {
+//                exclude '*.*'
+//                exclude '**/'
+//            }
+//        }
+//    }
 }
 
-buildscript {
-    repositories {
-        jcenter()
-    }
-    dependencies {
-        classpath 'com.github.jengelman.gradle.plugins:shadow:2.0.2'
-    }
-}
-apply plugin: 'com.github.johnrengelman.shadow'
-
-
-shadowJar {
-    baseName = 'hw-service'
-    classifier = null
-    version = null
-    mergeServiceFiles('META-INF/spring.*')
+// 拷贝文件
+task copyJars(type: Copy) {
+    from configurations.runtime
+    into 'dist'
 }

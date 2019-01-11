@@ -25,6 +25,12 @@ public class TrashProcess extends HwDataProcess {
 
     @Override
     public Header parseHeader(byte[] bytes) {
+        if (bytes.length < 10){
+            log.info("透传数据长度异常; [{}]", CommonUtil.bytesToStr(bytes));
+
+            return null;
+        }
+
         ByteBuf buf = Unpooled.copiedBuffer(bytes);
         // 0xF1
         buf.readByte();
@@ -37,7 +43,7 @@ public class TrashProcess extends HwDataProcess {
         int cmd = buf.readByte();
         int length = buf.readByte();
         if (buf.readableBytes() < length + 2) {
-            log.error("数据长度不足: [{}]", CommonUtil.bytesToStr(bytes));
+            log.warn("数据长度不足: [{}]", CommonUtil.bytesToStr(bytes));
             return null;
         }
 

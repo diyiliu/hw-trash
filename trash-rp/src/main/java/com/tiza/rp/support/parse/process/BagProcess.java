@@ -26,6 +26,12 @@ public class BagProcess extends HwDataProcess {
 
     @Override
     public Header parseHeader(byte[] bytes) {
+        if (bytes.length < 8){
+            log.info("透传数据长度异常; [{}]", CommonUtil.bytesToStr(bytes));
+
+            return null;
+        }
+
         ByteBuf buf = Unpooled.copiedBuffer(bytes);
         // 0xF1
         buf.readByte();
@@ -39,7 +45,7 @@ public class BagProcess extends HwDataProcess {
         int length = buf.readUnsignedByte();
         if (buf.readableBytes() < length) {
 
-            log.error("数据长度不足: [{}]", CommonUtil.bytesToStr(bytes));
+            log.warn("数据长度不足: [{}]", CommonUtil.bytesToStr(bytes));
             return null;
         }
         // 读写指令标识

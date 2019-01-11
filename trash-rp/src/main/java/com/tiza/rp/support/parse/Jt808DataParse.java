@@ -137,13 +137,13 @@ public class Jt808DataParse implements IDataParse {
         Jt808Header jt808Header = (Jt808Header) header;
         VehicleInfo vehicleInfo = (VehicleInfo) vehicleInfoProvider.get(jt808Header.getTerminalId());
 
-        Object[] args = new Object[]{position.getLng(), position.getLat(), position.getProvince(), position.getCity(), position.getArea(),
+        Object[] args = new Object[]{position.getEnLng(), position.getEnLat(), position.getProvince(), position.getCity(), position.getArea(),
                 new Date(position.getTime()), new Date(), vehicleInfo.getId()};
 
         String sql = "UPDATE serv_device_position " +
                 "SET " +
-                " longitude = ?," +
-                " latitude = ?," +
+                " encrypt_long = ?," +
+                " encrypt_lat = ?," +
                 " province = ?," +
                 " city = ?, " +
                 " area = ?, " +
