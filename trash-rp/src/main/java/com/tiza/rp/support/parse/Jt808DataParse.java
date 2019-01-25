@@ -103,8 +103,9 @@ public class Jt808DataParse implements IDataParse {
 
                 // 写入 kafka 准备指令下发
                 sendToKafka(jt808Header, param);
-                // 更新当前表
-                updateVehicleInfo(hwHeader);
+
+                // 更新工况表
+                updateWorkInfo(hwHeader);
             }
         }
     }
@@ -137,11 +138,13 @@ public class Jt808DataParse implements IDataParse {
         Jt808Header jt808Header = (Jt808Header) header;
         VehicleInfo vehicleInfo = (VehicleInfo) vehicleInfoProvider.get(jt808Header.getTerminalId());
 
-        Object[] args = new Object[]{position.getEnLng(), position.getEnLat(), position.getProvince(), position.getCity(), position.getArea(),
+        Object[] args = new Object[]{position.getLng(), position.getLat(), position.getEnLng(), position.getEnLat(), position.getProvince(), position.getCity(), position.getArea(),
                 new Date(position.getTime()), new Date(), vehicleInfo.getId()};
 
         String sql = "UPDATE serv_device_position " +
                 "SET " +
+                " longitude = ?," +
+                " latitude = ?," +
                 " encrypt_long = ?," +
                 " encrypt_lat = ?," +
                 " province = ?," +
@@ -160,10 +163,10 @@ public class Jt808DataParse implements IDataParse {
      *
      * @param hwHeader
      */
-    public void updateVehicleInfo(HwHeader hwHeader) {
+    public void updateWorkInfo(HwHeader hwHeader) {
         VehicleInfo vehicleInfo = (VehicleInfo) vehicleInfoProvider.get(hwHeader.getTerminalId());
 
-        String sql = "SELECT t.data_json  FROM serv_device_position t WHERE t.device_id=" + vehicleInfo.getId();
+        String sql = "SELECT t.data_json  FROM serv_device_work t WHERE t.device_id=" + vehicleInfo.getId();
         String json = jdbcTemplate.queryForObject(sql, String.class);
 
         // 工况参数
@@ -180,7 +183,7 @@ public class Jt808DataParse implements IDataParse {
 
         json = JacksonUtil.toJson(workMap);
         Object[] args = new Object[]{json, new Date(), vehicleInfo.getId()};
-        sql = "UPDATE serv_device_position " +
+        sql = "UPDATE serv_device_work " +
                 "SET " +
                 " data_json = ?, " +
                 " modified_date = ? " +
