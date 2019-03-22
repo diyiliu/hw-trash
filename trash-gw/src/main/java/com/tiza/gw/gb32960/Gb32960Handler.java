@@ -46,7 +46,6 @@ public class Gb32960Handler extends BaseUserDefinedHandler {
 
         // 需要应答
         if (resp == 0xFE) {
-
             doResponse(channelHandlerContext, tStarData, length);
         }
 
@@ -74,21 +73,21 @@ public class Gb32960Handler extends BaseUserDefinedHandler {
 
     private byte[] packResp(TStarData tStarData, boolean dateFlag) {
         int cmd = tStarData.getCmdID();
-        int respCmd = 0x01;
 
         int length = dateFlag ? 31 : 25;
         ByteBuf buf = Unpooled.buffer(length);
         buf.writeByte(0x23);
         buf.writeByte(0x23);
         buf.writeByte(cmd);
-        buf.writeByte(respCmd);
+        buf.writeByte(0x01);
         // VIN
         buf.writeBytes(tStarData.getTerminalID().getBytes());
         // 不加密
         buf.writeByte(0x01);
-        buf.writeShort(6);
+        buf.writeShort(dateFlag ? 6 : 0);
         // 是否包含时间
         if (dateFlag) {
+
             // 时间
             byte[] dateArray = CommonUtil.dateToBytes(new Date());
             buf.writeBytes(dateArray);

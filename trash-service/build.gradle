@@ -20,7 +20,7 @@ dependencies {
     compile fileTree(dir: project(':tstar-plugin').projectDir.path + "/libs/tstar-datainterface/tstar-datainterface-service", include: "**/*.jar")
     compile project(':tstar-plugin')
     compile project(':trash-rp')
-    
+
     compile group: 'org.springframework', name: 'spring-core', version: "$springVersion"
     compile group: 'org.springframework', name: 'spring-context', version: "$springVersion"
     compile group: 'com.alibaba', name: 'druid', version: '1.1.12'
