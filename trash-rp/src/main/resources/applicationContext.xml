@@ -51,9 +51,8 @@
         <property name="protocols">
             <list>
                 <value>com.tiza.plugin.protocol.jt808.Jt808DataProcess</value>
+                <value>com.tiza.plugin.protocol.gb32960.Gb32960DataProcess</value>
             </list>
         </property>
     </bean>
-
-    <bean id="jt808DataParse" class="com.tiza.rp.support.parse.Jt808DataParse" />
 </beans>

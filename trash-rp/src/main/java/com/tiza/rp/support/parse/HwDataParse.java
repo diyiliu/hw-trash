@@ -2,8 +2,7 @@ package com.tiza.rp.support.parse;
 
 import com.tiza.plugin.bean.VehicleInfo;
 import com.tiza.plugin.cache.ICache;
-import com.tiza.plugin.model.Header;
-import com.tiza.plugin.model.Jt808Header;
+import com.tiza.plugin.model.DeviceData;
 import com.tiza.plugin.model.Position;
 import com.tiza.plugin.model.adapter.DataParseAdapter;
 import com.tiza.plugin.util.CommonUtil;
@@ -18,6 +17,7 @@ import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.lang3.StringUtils;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.jdbc.core.JdbcTemplate;
+import org.springframework.stereotype.Service;
 
 import javax.annotation.Resource;
 import java.io.IOException;
@@ -26,13 +26,14 @@ import java.util.HashMap;
 import java.util.Map;
 
 /**
- * Description: Jt808DataParse
+ * Description: HwDataParse
  * Author: DIYILIU
  * Update: 2018-12-19 10:15
  */
 
 @Slf4j
-public class Jt808DataParse extends DataParseAdapter {
+@Service
+public class HwDataParse extends DataParseAdapter {
 
     @Resource
     private ICache vehicleInfoProvider;
@@ -59,9 +60,10 @@ public class Jt808DataParse extends DataParseAdapter {
     private Integer bagCode;
 
     @Override
-    public void detach(Header header, byte[] bytes) {
-        Jt808Header jt808Header = (Jt808Header) header;
-        String terminalId = jt808Header.getTerminalId();
+    public void detach(DeviceData deviceData) {
+        String terminalId = deviceData.getDeviceId();
+        byte[] bytes = deviceData.getBytes();
+        long gwTime = deviceData.getTime();
 
         VehicleInfo vehicleInfo = (VehicleInfo) vehicleInfoProvider.get(terminalId);
         int vehType = vehicleInfo.getVehType();
@@ -90,7 +92,7 @@ public class Jt808DataParse extends DataParseAdapter {
         if (hwHeader != null) {
             hwHeader.setTerminalId(terminalId);
             // 设置网关时间
-            hwHeader.setTime(jt808Header.getGwTime());
+            hwHeader.setTime(gwTime);
 
             hwDataProcess.parse(hwHeader.getContent(), hwHeader);
             Map param = new HashMap();
@@ -99,8 +101,16 @@ public class Jt808DataParse extends DataParseAdapter {
                 param.put("trashType", trashType);
                 param.putAll(hwHeader.getParamMap());
 
-                // 写入 kafka 准备指令下发
-                sendToKafka(jt808Header, param);
+                // 构造数据
+                int cmd = deviceData.getCmdId();
+                SendData sendData = new SendData();
+                sendData.setTerminal(terminalId);
+                sendData.setCmd(cmd);
+                sendData.setContent(CommonUtil.bytesToStr(bytes));
+                sendData.setData(param);
+                sendData.setTime(System.currentTimeMillis());
+                // 写入 kafka
+                sendToKafka(sendData);
 
                 // 更新工况表
                 updateWorkInfo(hwHeader);
@@ -108,19 +118,10 @@ public class Jt808DataParse extends DataParseAdapter {
         }
     }
 
-    @Override
-    public void sendToKafka(Header header, Map param) {
-        Jt808Header jt808Header = (Jt808Header) header;
-        String terminal = jt808Header.getTerminalId();
+    public void sendToKafka(SendData sendData) {
+        String terminal = sendData.getTerminal();
 
-        SendData send = new SendData();
-        send.setTerminal(terminal);
-        send.setCmd(jt808Header.getCmd());
-        send.setContent(CommonUtil.bytesToStr(jt808Header.getContent()));
-        send.setData(param);
-        send.setTime(System.currentTimeMillis());
-
-        String json = JacksonUtil.toJson(send);
+        String json = JacksonUtil.toJson(sendData);
         kafkaProducer.send(new KeyedMessage(sendTopic, terminal, json));
         log.info("终端[{}]写入 kafka [{}]", terminal, json);
     }
@@ -132,9 +133,8 @@ public class Jt808DataParse extends DataParseAdapter {
     }
 
     @Override
-    public void dealPosition(Header header, Position position) {
-        Jt808Header jt808Header = (Jt808Header) header;
-        VehicleInfo vehicleInfo = (VehicleInfo) vehicleInfoProvider.get(jt808Header.getTerminalId());
+    public void dealPosition(String deviceId, Position position) {
+        VehicleInfo vehicleInfo = (VehicleInfo) vehicleInfoProvider.get(deviceId);
 
         Object[] args = new Object[]{position.getLng(), position.getLat(), position.getEnLng(), position.getEnLat(), position.getProvince(), position.getCity(), position.getArea(),
                 new Date(position.getTime()), new Date(), vehicleInfo.getId()};
