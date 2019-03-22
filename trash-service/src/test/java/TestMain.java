@@ -3,6 +3,9 @@ import com.tiza.plugin.util.JacksonUtil;
 import com.tiza.service.support.model.CardInfo;
 import org.junit.Test;
 
+import java.util.HashMap;
+import java.util.Map;
+
 /**
  * Description: TestMain
  * Author: DIYILIU
@@ -54,5 +57,18 @@ public class TestMain {
         String str = "27029947554";
 
         System.out.println(CommonUtil.packBCD(str, 11));
+    }
+
+
+    @Test
+    public void test5() {
+        Map map = new HashMap() {
+            {
+                this.put("a", 123);
+            }
+        };
+
+        String str = JacksonUtil.toJson(map);
+        System.out.println(str);
     }
 }

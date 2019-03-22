@@ -72,6 +72,7 @@ public class TrashProcess extends HwDataProcess {
         int cmd = hwHeader.getCmd();
         ByteBuf buf = Unpooled.copiedBuffer(content);
 
+        // 设备状态上传
         if (0x03 == cmd) {
             int tempFlag = buf.readByte();
             double temp = CommonUtil.keepDecimal(buf.readShort(), 0.1, 1);
@@ -96,6 +97,7 @@ public class TrashProcess extends HwDataProcess {
             return;
         }
 
+        // 用户信息查询
         if (0x04 == cmd) {
             int authType = buf.readByte();
 

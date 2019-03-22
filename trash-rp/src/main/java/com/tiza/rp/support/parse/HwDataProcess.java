@@ -1,7 +1,7 @@
 package com.tiza.rp.support.parse;
 
 import com.tiza.plugin.model.Header;
-import com.tiza.plugin.model.IDataProcess;
+import com.tiza.plugin.model.facade.IDataProcess;
 import org.springframework.jdbc.core.JdbcTemplate;
 import org.springframework.stereotype.Service;
 

@@ -1,4 +1,4 @@
-package com.tiza.gw;
+package com.tiza.gw.jt808;
 
 import io.netty.buffer.ByteBuf;
 import io.netty.buffer.Unpooled;

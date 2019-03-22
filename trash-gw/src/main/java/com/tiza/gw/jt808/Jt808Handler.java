@@ -1,4 +1,4 @@
-package com.tiza.gw;
+package com.tiza.gw.jt808;
 
 import cn.com.tiza.tstar.common.entity.TStarData;
 import cn.com.tiza.tstar.gateway.entity.CommandData;

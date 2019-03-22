@@ -2,7 +2,7 @@ package com.tiza.rp.support.task;
 
 import com.tiza.plugin.bean.VehicleInfo;
 import com.tiza.plugin.cache.ICache;
-import com.tiza.plugin.model.ITask;
+import com.tiza.plugin.model.facade.ITask;
 import com.tiza.plugin.util.CommonUtil;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.jdbc.core.JdbcTemplate;
@@ -76,6 +76,6 @@ public class VehicleInfoTask implements ITask {
             vehicleCache.put(vehicle.getTerminalId(), vehicle);
             tempKeys.add(vehicle.getTerminalId());
         }
-        CommonUtil.refrechCach(oldKeys, tempKeys, vehicleCache);
+        CommonUtil.refreshCache(oldKeys, tempKeys, vehicleCache);
     }
 }

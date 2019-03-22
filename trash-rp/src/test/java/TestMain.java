@@ -54,4 +54,10 @@ public class TestMain {
         System.out.println(userId);
 
     }
+
+    @Test
+    public void test2(){
+
+        System.out.println(System.currentTimeMillis());
+    }
 }

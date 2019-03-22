@@ -3,9 +3,9 @@ package com.tiza.rp.support.parse;
 import com.tiza.plugin.bean.VehicleInfo;
 import com.tiza.plugin.cache.ICache;
 import com.tiza.plugin.model.Header;
-import com.tiza.plugin.model.IDataParse;
 import com.tiza.plugin.model.Jt808Header;
 import com.tiza.plugin.model.Position;
+import com.tiza.plugin.model.adapter.DataParseAdapter;
 import com.tiza.plugin.util.CommonUtil;
 import com.tiza.plugin.util.JacksonUtil;
 import com.tiza.rp.support.model.HwHeader;
@@ -18,7 +18,6 @@ import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.lang3.StringUtils;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.jdbc.core.JdbcTemplate;
-import org.springframework.stereotype.Service;
 
 import javax.annotation.Resource;
 import java.io.IOException;
@@ -33,8 +32,7 @@ import java.util.Map;
  */
 
 @Slf4j
-@Service
-public class Jt808DataParse implements IDataParse {
+public class Jt808DataParse extends DataParseAdapter {
 
     @Resource
     private ICache vehicleInfoProvider;

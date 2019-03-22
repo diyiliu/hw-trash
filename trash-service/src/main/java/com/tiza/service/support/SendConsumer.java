@@ -106,7 +106,7 @@ public class SendConsumer extends Thread {
                     continue;
                 }
 
-                // 垃圾箱
+                // 发放袋
                 if ("trash-bag".equals(trashType)) {
                     // 获取公共票据
                     String ticket = getTicket();

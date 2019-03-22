@@ -58,7 +58,6 @@ public class Jt808ParseHandler extends BaseHandle {
 
     @Override
     public void init() throws Exception {
-
         // 加载地图数据，解析省市区
         LocationParser.getInstance().init();
 
