@@ -59,7 +59,7 @@ public class ServiceConfig {
     @Bean
     public TStarSimpleClient tStarClient() throws Exception{
         String username = environment.getProperty("tstar.username");
-        String password = environment.getProperty("tstar.passowrd");
+        String password = environment.getProperty("tstar.password");
 
         return new TStarSimpleClient(username, password);
     }
