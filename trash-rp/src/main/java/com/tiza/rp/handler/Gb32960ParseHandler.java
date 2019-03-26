@@ -38,7 +38,7 @@ public class Gb32960ParseHandler extends BaseHandle {
             return null;
         }
 
-        String terminalId = header.getTerminalId();
+        String terminalId = header.getVin();
         ICache vehicleInfoProvider = SpringUtil.getBean("vehicleInfoProvider");
 
         //log.info("设备缓存: {}", JacksonUtil.toJson(vehicleInfoProvider.getKeys()));

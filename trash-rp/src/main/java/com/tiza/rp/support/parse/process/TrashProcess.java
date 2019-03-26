@@ -31,33 +31,38 @@ public class TrashProcess extends HwDataProcess {
             return null;
         }
 
-        ByteBuf buf = Unpooled.copiedBuffer(bytes);
-        // 0xF1
-        buf.readByte();
-        // 0xFE,0xFE
-        buf.readBytes(new byte[2]);
+        HwHeader header = null;
+        try {
+            ByteBuf buf = Unpooled.copiedBuffer(bytes);
+            // 0xF1
+            buf.readByte();
+            // 0xFE,0xFE
+            buf.readBytes(new byte[2]);
 
-        byte[] startBytes = new byte[3];
-        buf.readBytes(startBytes);
+            byte[] startBytes = new byte[3];
+            buf.readBytes(startBytes);
 
-        int cmd = buf.readByte();
-        int length = buf.readByte();
-        if (buf.readableBytes() < length + 2) {
-            log.warn("数据长度不足: [{}]", CommonUtil.bytesToStr(bytes));
-            return null;
+            int cmd = buf.readByte();
+            int length = buf.readByte();
+            if (buf.readableBytes() < length + 2) {
+                log.warn("数据长度不足: [{}]", CommonUtil.bytesToStr(bytes));
+                return null;
+            }
+
+            byte[] content = new byte[length];
+            buf.readBytes(content);
+            // 暂时不验证校验位
+            byte check = buf.readByte();
+            byte endByte = buf.readByte();
+
+            header = new HwHeader();
+            header.setStartBytes(startBytes);
+            header.setCmd(cmd);
+            header.setContent(content);
+            header.setEndByte(endByte);
+        } catch (Exception e) {
+            e.printStackTrace();
         }
-
-        byte[] content = new byte[length];
-        buf.readBytes(content);
-        // 暂时不验证校验位
-        byte check = buf.readByte();
-        byte endByte = buf.readByte();
-
-        HwHeader header = new HwHeader();
-        header.setStartBytes(startBytes);
-        header.setCmd(cmd);
-        header.setContent(content);
-        header.setEndByte(endByte);
 
         return header;
     }

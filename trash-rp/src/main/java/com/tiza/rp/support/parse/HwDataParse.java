@@ -95,11 +95,12 @@ public class HwDataParse extends DataParseAdapter {
             hwHeader.setTime(gwTime);
 
             hwDataProcess.parse(hwHeader.getContent(), hwHeader);
-            Map param = new HashMap();
-            if (param != null) {
+            Map headerMap = hwHeader.getParamMap();
+            if (headerMap != null) {
+                Map param = new HashMap();
                 param.put("id", hwHeader.getCmd());
                 param.put("trashType", trashType);
-                param.putAll(hwHeader.getParamMap());
+                param.putAll(headerMap);
 
                 // 构造数据
                 int cmd = deviceData.getCmdId();

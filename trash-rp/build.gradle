@@ -44,8 +44,8 @@ task copyConf(type: Copy) {
 
 
 jar {
-    archiveName = 'trash_jt808.jar'
-//    archiveName = 'mstar_jt808.jar'
+//    archiveName = 'trash_jt808.jar'
+    archiveName = 'mstar_jt808.jar'
 
     from {
         File srcDir = file("$buildDir/dist")
@@ -57,7 +57,7 @@ jar {
 jar.dependsOn(copyJar)
 
 task zip(type: Zip, dependsOn: [jar, copyConf]) {
-    archiveName = 'trash_jt808.zip'
-//    archiveName = 'mstar_jt808.zip'
+//    archiveName = 'trash_jt808.zip'
+    archiveName = 'mstar_jt808.zip'
     from 'build/libs'
 }

@@ -32,35 +32,40 @@ public class BagProcess extends HwDataProcess {
             return null;
         }
 
-        ByteBuf buf = Unpooled.copiedBuffer(bytes);
-        // 0xF1
-        buf.readByte();
-        // 0x5B,0xB5
-        buf.readBytes(new byte[2]);
+        HwHeader header = null;
+        try {
+            ByteBuf buf = Unpooled.copiedBuffer(bytes);
+            // 0xF1
+            buf.readByte();
+            // 0x5B,0xB5
+            buf.readBytes(new byte[2]);
 
-        // 消息ID
-        byte[] startBytes = new byte[2];
-        buf.readBytes(startBytes);
+            // 消息ID
+            byte[] startBytes = new byte[2];
+            buf.readBytes(startBytes);
 
-        int length = buf.readUnsignedByte();
-        if (buf.readableBytes() < length) {
+            int length = buf.readUnsignedByte();
+            if (buf.readableBytes() < length) {
 
-            log.warn("数据长度不足: [{}]", CommonUtil.bytesToStr(bytes));
-            return null;
+                log.warn("数据长度不足: [{}]", CommonUtil.bytesToStr(bytes));
+                return null;
+            }
+            // 读写指令标识
+            int readWrite = buf.readUnsignedByte();
+            // 功能编号
+            int funId = buf.readByte();
+            // 数据
+            byte[] content = new byte[length - 2];
+            buf.readBytes(content);
+
+            header = new HwHeader();
+            header.setStartBytes(startBytes);
+            header.setReadWrite(readWrite);
+            header.setCmd(funId);
+            header.setContent(content);
+        } catch (Exception e) {
+            e.printStackTrace();
         }
-        // 读写指令标识
-        int readWrite = buf.readUnsignedByte();
-        // 功能编号
-        int funId = buf.readByte();
-        // 数据
-        byte[] content = new byte[length - 2];
-        buf.readBytes(content);
-
-        HwHeader header = new HwHeader();
-        header.setStartBytes(startBytes);
-        header.setReadWrite(readWrite);
-        header.setCmd(funId);
-        header.setContent(content);
 
         return header;
     }
