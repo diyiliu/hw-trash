@@ -1,5 +1,6 @@
 package com.tiza.rp.support.parse;
 
+import cn.com.tiza.tstar.common.process.BaseHandle;
 import com.tiza.plugin.bean.VehicleInfo;
 import com.tiza.plugin.cache.ICache;
 import com.tiza.plugin.model.DeviceData;
@@ -18,12 +19,11 @@ import org.apache.commons.lang3.StringUtils;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.jdbc.core.JdbcTemplate;
 import org.springframework.stereotype.Service;
+import redis.clients.jedis.Jedis;
 
 import javax.annotation.Resource;
 import java.io.IOException;
-import java.util.Date;
-import java.util.HashMap;
-import java.util.Map;
+import java.util.*;
 
 /**
  * Description: HwDataParse
@@ -59,28 +59,48 @@ public class HwDataParse extends DataParseAdapter {
     @Value("${trash.bag}")
     private Integer bagCode;
 
+    @Value("${protocol.jt808}")
+    private String jt808Code;
+
+    @Value("${protocol.gb32960}")
+    private String gb32960Code;
+
     @Override
     public void detach(DeviceData deviceData) {
         String terminalId = deviceData.getDeviceId();
         byte[] bytes = deviceData.getBytes();
         long gwTime = deviceData.getTime();
+        int cmd = deviceData.getCmdId();
 
         VehicleInfo vehicleInfo = (VehicleInfo) vehicleInfoProvider.get(terminalId);
         int vehType = vehicleInfo.getVehType();
+        String protocol = vehicleInfo.getProtocol();
 
         String trashType = "";
         HwDataProcess hwDataProcess = null;
 
-        // 智能垃圾箱
+        // 设备类型
         if (vehType == binCode) {
             trashType = "trash-bin";
             hwDataProcess = trashProcess;
         }
-
-        // 垃圾袋发放机
         if (vehType == bagCode) {
             trashType = "trash-bag";
             hwDataProcess = bagProcess;
+        }
+
+        // 应答指令ID
+        int respCmd = 0;
+
+        // 协议类型
+        String protocolType = "";
+        if (jt808Code.equals(protocol)){
+            protocolType = "trash-jt808";
+            respCmd = 0x8900;
+        }
+        if (gb32960Code.equals(protocol)){
+            protocolType = "trash-gb32960";
+            respCmd = cmd;
         }
 
         if (hwDataProcess == null) {
@@ -100,21 +120,52 @@ public class HwDataParse extends DataParseAdapter {
                 Map param = new HashMap();
                 param.put("id", hwHeader.getCmd());
                 param.put("trashType", trashType);
+                param.put("protocolType", protocolType);
                 param.putAll(headerMap);
 
                 // 构造数据
-                int cmd = deviceData.getCmdId();
                 SendData sendData = new SendData();
                 sendData.setTerminal(terminalId);
                 sendData.setCmd(cmd);
+                sendData.setRespCmd(respCmd);
                 sendData.setContent(CommonUtil.bytesToStr(bytes));
                 sendData.setData(param);
                 sendData.setTime(System.currentTimeMillis());
+
                 // 写入 kafka
                 sendToKafka(sendData);
 
                 // 更新工况表
                 updateWorkInfo(hwHeader);
+            }
+        }
+    }
+
+    @Override
+    public void dealWithTStar(DeviceData deviceData, BaseHandle handle) {
+        // gb32960 0x02
+        if (deviceData.getDataBody() != null) {
+            List<Map> paramValues = (List<Map>) deviceData.getDataBody();
+
+            for (int i = 0; i < paramValues.size(); i++) {
+                Map map = paramValues.get(i);
+                for (Iterator iterator = map.keySet().iterator(); iterator.hasNext(); ) {
+                    String key = (String) iterator.next();
+                    Object value = map.get(key);
+
+                    if (key.equalsIgnoreCase("position")) {
+                        Position position = (Position) value;
+                        position.setTime(deviceData.getTime());
+                        dealPosition(deviceData.getDeviceId(), position);
+                    }
+
+                    if (key.equalsIgnoreCase("AA")) {
+                        byte[] bytes = (byte[]) value;
+                        deviceData.setBytes(bytes);
+
+                        detach(deviceData);
+                    }
+                }
             }
         }
     }

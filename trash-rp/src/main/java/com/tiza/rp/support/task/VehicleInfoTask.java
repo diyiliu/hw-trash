@@ -38,9 +38,10 @@ public class VehicleInfoTask implements ITask {
         log.info("刷新车辆列表 ...");
 
         String sql = "SELECT   " +
-                "  `d`.`id` vehid,  " +
+                "  `d`.`id` vehId,  " +
                 "  `t`.`terminal_no` terminal,  " +
-                "  `d`.`hardware_type` vehtype   " +
+                "  `t`.`protocol_type` protocol," +
+                "  `d`.`hardware_type` vehType   " +
                 "FROM  " +
                 "  `biz_terminal` t   " +
                 "  INNER JOIN `biz_device` d   " +
@@ -52,9 +53,10 @@ public class VehicleInfoTask implements ITask {
             @Override
             public VehicleInfo mapRow(ResultSet rs, int rowNum) throws SQLException {
                 VehicleInfo vehicleInfo = new VehicleInfo();
-                vehicleInfo.setId(rs.getLong("vehid"));
+                vehicleInfo.setId(rs.getLong("vehId"));
                 vehicleInfo.setTerminalId(rs.getString("terminal"));
-                vehicleInfo.setVehType(rs.getInt("vehtype"));
+                vehicleInfo.setVehType(rs.getInt("vehType"));
+                vehicleInfo.setProtocol(rs.getString("protocol"));
 
                 return vehicleInfo;
             }

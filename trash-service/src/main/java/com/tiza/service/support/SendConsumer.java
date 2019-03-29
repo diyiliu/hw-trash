@@ -50,8 +50,11 @@ public class SendConsumer extends Thread {
     @Resource
     private TStarSimpleClient tStarClient;
 
-    @Value("${tstar.terminalType}")
-    private String terminalType;
+    @Value("${tstar.protocol-jt808}")
+    private String protocolJt808;
+
+    @Value("${tstar.protocol-gb32960}")
+    private String protocolGb32960;
 
     @Value("${trash.bin.url}")
     private String trashUrl;
@@ -92,9 +95,19 @@ public class SendConsumer extends Thread {
             try {
                 SendData sendData = JacksonUtil.toObject(text, SendData.class);
                 Map data = sendData.getData();
+
+                // 协议类型
+                String terminalType = "";
+                String protocolType = (String) data.get("protocolType");
+                if ("trash-jt808".equals(protocolType)){
+                    terminalType = protocolJt808;
+                }
+                if ("trash-gb32960".equals(protocolType)){
+                    terminalType = protocolGb32960;
+                }
+
                 // 设备类型
                 String trashType = (String) data.get("trashType");
-
                 // 垃圾箱
                 if ("trash-bin".equals(trashType)) {
                     SendThread sendThread = new TrashSender(tStarClient, trashProcess);

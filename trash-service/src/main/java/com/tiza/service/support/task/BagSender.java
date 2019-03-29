@@ -45,7 +45,7 @@ public class BagSender extends SendThread {
         HwHeader hwHeader = (HwHeader) dataProcess.parseHeader(bytes);
         hwHeader.setTerminalId(terminal);
 
-        int cmd = 0x8900;
+        int cmd = sendData.getRespCmd();
         int readWrite = hwHeader.getReadWrite();
 
         try {
@@ -225,7 +225,7 @@ public class BagSender extends SendThread {
                 content = dataProcess.pack(hwHeader, status);
             }
 
-            jt808Send(sendData.getTerminal(), cmd, CommonUtil.getMsgSerial(), content);
+            toSend(sendData.getTerminal(), cmd, CommonUtil.getMsgSerial(), content);
         } catch (Exception e) {
             e.printStackTrace();
         }

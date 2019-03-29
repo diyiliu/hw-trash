@@ -27,7 +27,7 @@ public class Jt808ParseHandler extends BaseHandle {
         ICache cmdCacheProvider = SpringUtil.getBean("cmdCacheProvider");
         Jt808DataProcess process = (Jt808DataProcess) cmdCacheProvider.get(rpTuple.getCmdID());
         if (process == null) {
-            log.warn("CMD {} ,不到指令[{}]解析器!", JacksonUtil.toJson(cmdCacheProvider.getKeys()), CommonUtil.toHex(rpTuple.getCmdID(), 4));
+            log.warn("CMD {}, 找不到指令[{}]解析器!", JacksonUtil.toJson(cmdCacheProvider.getKeys()), CommonUtil.toHex(rpTuple.getCmdID(), 4));
             return null;
         }
 

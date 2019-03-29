@@ -5,6 +5,9 @@ import com.tiza.plugin.util.CommonUtil;
 import com.tiza.rp.support.model.HwHeader;
 import com.tiza.rp.support.parse.HwDataProcess;
 import com.tiza.service.support.task.abs.SendThread;
+import io.netty.buffer.ByteBuf;
+import io.netty.buffer.Unpooled;
+import storm.trident.testing.IFeeder;
 
 import java.util.Map;
 
@@ -31,12 +34,24 @@ public class TrashSender extends SendThread {
             byte[] bytes = CommonUtil.hexStringToBytes(sendData.getContent());
             HwHeader hwHeader = (HwHeader) dataProcess.parseHeader(bytes);
 
-            int cmd = 0x8900;
-            byte[] content = new byte[0];
+            // 应答指令ID
+            int cmd = sendData.getRespCmd();
 
+            byte[] content = new byte[0];
             // 通用应答
             if (0x03 == id || 0x06 == id || 0x07 == id) {
                 content = dataProcess.pack(hwHeader, new Object[0]);
+
+                // 特殊处理(设备状态跟着0x02指令透传)
+                if (0x03 == id && terminalType.contains("gb32960")){
+                    int length = content.length;
+                    ByteBuf buf = Unpooled.buffer(3 + length);
+                    buf.writeByte(0xAA);
+                    buf.writeShort(length);
+                    buf.writeBytes(content);
+
+                    content = buf.array();
+                }
             }
             // 用户信息查询
             if (0x04 == id) {
@@ -50,7 +65,7 @@ public class TrashSender extends SendThread {
             }
 
             if (content.length > 1) {
-                jt808Send(sendData.getTerminal(), cmd, CommonUtil.getMsgSerial(), content);
+                toSend(sendData.getTerminal(), cmd, CommonUtil.getMsgSerial(), content);
             }
         } catch (Exception e) {
             e.printStackTrace();

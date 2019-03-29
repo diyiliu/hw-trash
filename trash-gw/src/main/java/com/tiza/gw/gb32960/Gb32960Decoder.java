@@ -5,8 +5,7 @@ import com.tiza.plugin.util.CommonUtil;
 import io.netty.buffer.ByteBuf;
 import io.netty.buffer.Unpooled;
 import io.netty.channel.ChannelHandlerContext;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
+import lombok.extern.slf4j.Slf4j;
 
 import java.util.List;
 
@@ -16,8 +15,8 @@ import java.util.List;
  * Update: 2017-09-05 10:31
  */
 
+@Slf4j
 public class Gb32960Decoder extends CustomDecoder {
-    private Logger logger = LoggerFactory.getLogger(this.getClass());
 
     @Override
     protected void decode(ChannelHandlerContext ctx, ByteBuf buf, List<Object> out) throws Exception {
@@ -32,7 +31,7 @@ public class Gb32960Decoder extends CustomDecoder {
         // 头标识
         if (header1 != 0x23 || header2 != 0x23) {
             String host = ctx.channel().remoteAddress().toString().trim().replaceFirst("/", "");
-            logger.error("协议头校验失败, 断开连接[{}]!", host);
+            log.error("协议头校验失败, 断开连接[{}]!", host);
             ctx.close();
             return;
         }
@@ -53,7 +52,7 @@ public class Gb32960Decoder extends CustomDecoder {
         // 验证校验位
         if (!check(bytes)) {
             // 关闭连接
-            logger.error("校验位错误, 断开连接!");
+            log.error("校验位错误, 断开连接!");
             ctx.close();
             return;
         }
@@ -81,7 +80,7 @@ public class Gb32960Decoder extends CustomDecoder {
 
             return true;
         }
-        logger.error("校验位错误, [实际值{}, 计算值{}, 原始指令[{}]]!", last, check, CommonUtil.bytesToStr(bytes));
+        log.error("校验位错误, [实际值{}, 计算值{}, 原始指令[{}]]!", last, check, CommonUtil.bytesToStr(bytes));
 
         return false;
     }

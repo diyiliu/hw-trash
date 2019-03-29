@@ -19,6 +19,9 @@ public class SendData {
     /** 透传指令ID **/
     private Integer cmd;
 
+    /** 透传指令应答ID **/
+    private Integer respCmd;
+
     /** 透传内容 **/
     private String content;
 
