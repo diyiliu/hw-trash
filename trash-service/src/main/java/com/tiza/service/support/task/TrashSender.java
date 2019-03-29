@@ -7,8 +7,8 @@ import com.tiza.rp.support.parse.HwDataProcess;
 import com.tiza.service.support.task.abs.SendThread;
 import io.netty.buffer.ByteBuf;
 import io.netty.buffer.Unpooled;
-import storm.trident.testing.IFeeder;
 
+import java.util.Date;
 import java.util.Map;
 
 /**
@@ -45,7 +45,8 @@ public class TrashSender extends SendThread {
                 // 特殊处理(设备状态跟着0x02指令透传)
                 if (0x03 == id && terminalType.contains("gb32960")){
                     int length = content.length;
-                    ByteBuf buf = Unpooled.buffer(3 + length);
+                    ByteBuf buf = Unpooled.buffer(9 + length);
+                    buf.writeBytes(CommonUtil.dateToBytes(new Date()));
                     buf.writeByte(0xAA);
                     buf.writeShort(length);
                     buf.writeBytes(content);
