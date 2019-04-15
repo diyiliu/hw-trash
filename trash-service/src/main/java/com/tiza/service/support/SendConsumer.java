@@ -33,10 +33,17 @@ import java.util.concurrent.Executors;
 @Slf4j
 public class SendConsumer extends Thread {
 
-    /** 请求票据 **/
-    private static String BAG_API_TICKET;
-    /** 票据过期时间 **/
-    private static long BAG_EXPIRE_TIME;
+    /**
+     * 票据过期时间
+     **/
+    private static long BAG_EXPIRE_TIME = 0;
+    private static String BAG_TICKET = "";
+
+    /**
+     * 票据过期时间
+     **/
+    private static long BIN_EXPIRE_TIME = 0;
+    private static String BIN_TOKEN = "";
 
     private String sendTopic;
     private ConsumerConnector consumer;
@@ -57,7 +64,7 @@ public class SendConsumer extends Thread {
     private String protocolGb32960;
 
     @Value("${trash.bin.url}")
-    private String trashUrl;
+    private String binUrl;
 
     @Value("${trash.bag.url}")
     private String bagUrl;
@@ -73,6 +80,18 @@ public class SendConsumer extends Thread {
      **/
     @Value("${trash.bag.appSecret}")
     private String bagSecret;
+
+    /**
+     * 应用 ID
+     **/
+    @Value("${trash.bin.appId}")
+    private String binAppId;
+
+    /**
+     * 应用密钥
+     **/
+    @Value("${trash.bin.appSecret}")
+    private String binSecret;
 
     @Resource
     private ICache bagOptProvider;
@@ -99,10 +118,10 @@ public class SendConsumer extends Thread {
                 // 协议类型
                 String terminalType = "";
                 String protocolType = (String) data.get("protocolType");
-                if ("trash-jt808".equals(protocolType)){
+                if ("trash-jt808".equals(protocolType)) {
                     terminalType = protocolJt808;
                 }
-                if ("trash-gb32960".equals(protocolType)){
+                if ("trash-gb32960".equals(protocolType)) {
                     terminalType = protocolGb32960;
                 }
 
@@ -110,20 +129,28 @@ public class SendConsumer extends Thread {
                 String trashType = (String) data.get("trashType");
                 // 垃圾箱
                 if ("trash-bin".equals(trashType)) {
-                    SendThread sendThread = new TrashSender(tStarClient, trashProcess);
-                    sendThread.setTerminalType(terminalType);
-                    sendThread.setBaseUrl(trashUrl);
-                    sendThread.setData(sendData);
+                    // 获取公共票据
+                    String token = getBinToken();
+                    if (StringUtils.isEmpty(token)) {
+                        log.error("获取 API票据失败!");
+                        continue;
+                    }
 
-                    trashThreadPool.execute(sendThread);
+                    TrashSender trashSender = new TrashSender(tStarClient, trashProcess);
+                    trashSender.setTerminalType(terminalType);
+                    trashSender.setBaseUrl(binUrl);
+                    trashSender.setData(sendData);
+                    trashSender.setToken(token);
+
+                    trashThreadPool.execute(trashSender);
                     continue;
                 }
 
                 // 发放袋
                 if ("trash-bag".equals(trashType)) {
                     // 获取公共票据
-                    String ticket = getTicket();
-                    if (StringUtils.isEmpty(ticket)){
+                    String ticket = getBagTicket();
+                    if (StringUtils.isEmpty(ticket)) {
                         log.error("获取 API票据失败!");
                         continue;
                     }
@@ -154,10 +181,11 @@ public class SendConsumer extends Thread {
 
     /**
      * 获取垃圾发放机第三方 API 票据
+     *
      * @return
      * @throws Exception
      */
-    public String getTicket() throws Exception {
+    public String getBagTicket() throws Exception {
         if (System.currentTimeMillis() > BAG_EXPIRE_TIME) {
             Map param = new HashMap();
             param.put("action", "ticket");
@@ -168,11 +196,37 @@ public class SendConsumer extends Thread {
             Map map = JacksonUtil.toObject(json, HashMap.class);
             int errcode = (int) map.get("errcode");
             if (0 == errcode) {
-                BAG_API_TICKET = (String) map.get("ticket");
                 BAG_EXPIRE_TIME = System.currentTimeMillis() + (int) map.get("expires") * 1000;
+
+                BAG_TICKET = (String) map.get("ticket");
             }
         }
 
-        return BAG_API_TICKET;
+        return BAG_TICKET;
+    }
+
+    /**
+     * 获取第三方 API 票据
+     *
+     * @return
+     * @throws Exception
+     */
+    public String getBinToken() throws Exception {
+        if (System.currentTimeMillis() > BIN_EXPIRE_TIME) {
+            Map param = new HashMap();
+            param.put("appid", binAppId);
+            param.put("secret", binSecret);
+
+            String json = HttpUtil.getForString(binUrl + "/token", param);
+            Map map = JacksonUtil.toObject(json, HashMap.class);
+            int errcode = (int) map.get("errcode");
+            if (0 == errcode) {
+                BIN_EXPIRE_TIME = System.currentTimeMillis() + (int) map.get("expires") * 1000;
+
+                BIN_TOKEN = (String) map.get("token");
+            }
+        }
+
+        return BIN_TOKEN;
     }
 }

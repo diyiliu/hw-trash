@@ -15,7 +15,7 @@ public class TestMain {
 
 
     @Test
-    public void test(){
+    public void test() {
         String str = "027029947553";
 
         System.out.println(str.length());
@@ -24,7 +24,7 @@ public class TestMain {
     }
 
     @Test
-    public void test1() throws Exception{
+    public void test1() throws Exception {
         String str = "{\"errcode\":0,\"name\":\"郭敬茜\",\"balance\":\"8442.00000\",\"uid\":\"15198\",\"phone\":\"13775991789\"}";
 
         CardInfo cardInfo = JacksonUtil.toObject(str, CardInfo.class);
@@ -33,7 +33,7 @@ public class TestMain {
     }
 
     @Test
-    public void test2(){
+    public void test2() {
 
         String phone = "1368513";
         int length = phone.length();
@@ -44,7 +44,7 @@ public class TestMain {
 
 
     @Test
-    public void test3(){
+    public void test3() {
         Double d = 100d;
 
         byte[] bytes = CommonUtil.longToBytes(d.intValue(), 3);
@@ -53,7 +53,7 @@ public class TestMain {
 
 
     @Test
-    public void test4(){
+    public void test4() {
         String str = "27029947554";
 
         System.out.println(CommonUtil.packBCD(str, 11));
@@ -70,5 +70,13 @@ public class TestMain {
 
         String str = JacksonUtil.toJson(map);
         System.out.println(str);
+    }
+
+
+    @Test
+    public void testAddZero() {
+        String str = "abc";
+
+        System.out.println(CommonUtil.addPrefixZero(str, 11));
     }
 }

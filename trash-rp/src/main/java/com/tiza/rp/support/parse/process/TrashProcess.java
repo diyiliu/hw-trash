@@ -25,7 +25,7 @@ public class TrashProcess extends HwDataProcess {
 
     @Override
     public Header parseHeader(byte[] bytes) {
-        if (bytes.length < 10){
+        if (bytes.length < 10) {
             log.info("透传数据长度异常; [{}]", CommonUtil.bytesToStr(bytes));
 
             return null;
@@ -86,16 +86,25 @@ public class TrashProcess extends HwDataProcess {
             }
 
             int n = buf.readByte();
-            int[] array = new int[n];
+            List list = new ArrayList();
             for (int i = 0; i < n; i++) {
-                array[i] = buf.readByte();
+                int category = buf.readByte();
+                int distance = buf.readByte();
+
+                /*
+                Map map = new HashMap();
+                map.put("category", category);
+                map.put("distance", distance);
+                list.add(map);
+                */
+                list.add(distance);
             }
 
             param.put("temperature", temp);
-            param.put("binsRange", array);
+            param.put("binsRange", list);
             hwHeader.setParamMap(param);
 
-            Object[] args = new Object[]{terminalId, temp, JacksonUtil.toJson(array), gwTime};
+            Object[] args = new Object[]{terminalId, temp, JacksonUtil.toJson(list), gwTime};
             String sql = "INSERT INTO trashcan_work_param_log(ter_no, temperature, work_param, gw_time) VALUES (?, ?, ?, ?)";
             jdbcTemplate.update(sql, args);
 
@@ -141,14 +150,16 @@ public class TrashProcess extends HwDataProcess {
             List list = new ArrayList();
             for (int i = 0; i < n; i++) {
 
+                int category = buf.readByte();
                 int weight = buf.readShort();
                 int before = buf.readShort();
                 int after = buf.readShort();
 
                 Map wMap = new HashMap();
-                wMap.put("weight", weight);
-                wMap.put("before", before);
-                wMap.put("after", after);
+                wMap.put("category", category);
+                wMap.put("weight", CommonUtil.keepDecimal(weight, 0.01, 2));
+                wMap.put("before", CommonUtil.keepDecimal(before, 0.01, 2));
+                wMap.put("after", CommonUtil.keepDecimal(after, 0.01, 2));
                 list.add(wMap);
             }
 
@@ -171,20 +182,48 @@ public class TrashProcess extends HwDataProcess {
                 log.error("数据长度不足: [{}]", CommonUtil.bytesToStr(content));
             }
 
-            int[] array = new int[n];
+            List list = new ArrayList();
             for (int i = 0; i < n; i++) {
-                array[i] = buf.readByte();
+                int category = buf.readByte();
+                int fault = buf.readByte();
+
+               /*
+                Map map = new HashMap();
+                map.put("category", category);
+                map.put("fault", fault);
+                list.add(map);
+                */
+
+                list.add(fault);
             }
 
-            param.put("binsFault", array);
+            param.put("binsFault", list);
             hwHeader.setParamMap(param);
 
-            Object[] args = new Object[]{terminalId, n, JacksonUtil.toJson(array), gwTime};
+            Object[] args = new Object[]{terminalId, n, JacksonUtil.toJson(list), gwTime};
             String sql = "INSERT INTO trashcan_fault_log(ter_no, channel_count, fault_content, gw_time) VALUES (?, ?, ?, ?)";
             jdbcTemplate.update(sql, args);
 
             return;
         }
+
+        // 清理签到上传
+        if (0x07 == cmd) {
+            int authType = buf.readByte();
+
+            int length = buf.readUnsignedByte();
+            byte[] array = new byte[length];
+            buf.readBytes(array);
+
+            String authContent = new String(array);
+
+            param.put("authType", authType);
+            param.put("authContent", authContent);
+            hwHeader.setParamMap(param);
+            return;
+        }
+
+
     }
 
     @Override
@@ -201,30 +240,34 @@ public class TrashProcess extends HwDataProcess {
 
         if (0x04 == cmd) {
             int status = (int) argus[0];
-            long account = (long) argus[1];
-            String user = (String) argus[2];
+            String user = (String) argus[1];
+            String account = (String) argus[2];
             int money = (int) argus[3];
 
             byte[] userBytes = user.getBytes(Charset.forName("UTF-8"));
             int userLen = userBytes.length;
-            byte[] userArray = new byte[20];
+            byte[] userArray = new byte[28];
             System.arraycopy(userBytes, 0, userArray, 0, userLen);
 
-            ByteBuf buf = Unpooled.buffer(40);
+            byte[] accountBytes = account.getBytes();
+            int accountLen = accountBytes.length;
+
+            ByteBuf buf = Unpooled.buffer(41 + accountLen);
             buf.writeBytes(startBytes);
             buf.writeByte(cmd);
-            buf.writeByte(35);
+            buf.writeByte(36 + accountLen);
             buf.writeByte(status);
-            buf.writeLong(account);
             buf.writeByte(userLen);
             buf.writeBytes(userArray);
             buf.writeInt(money);
-            buf.writeByte(1);
+            buf.writeByte(0);
+            buf.writeByte(accountLen);
+            buf.writeBytes(accountBytes);
 
             return combine(buf.array());
         }
 
-        if (0x05 == cmd){
+        if (0x05 == cmd) {
             int status = (int) argus[0];
             int money = (int) argus[1];
 

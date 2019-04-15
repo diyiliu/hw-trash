@@ -51,8 +51,8 @@
     <bean class="com.tiza.plugin.listener.SpringInitializer">
         <property name="protocols">
             <list>
-                <!--<value>com.tiza.plugin.protocol.jt808.Jt808DataProcess</value>-->
-                <value>com.tiza.plugin.protocol.gb32960.Gb32960DataProcess</value>
+                <value>com.tiza.plugin.protocol.jt808.Jt808DataProcess</value>
+                <!--<value>com.tiza.plugin.protocol.gb32960.Gb32960DataProcess</value>-->
             </list>
         </property>
     </bean>

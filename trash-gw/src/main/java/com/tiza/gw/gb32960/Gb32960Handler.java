@@ -44,7 +44,8 @@ public class Gb32960Handler extends BaseUserDefinedHandler {
         // VIN码
         byte[] vinArray = new byte[17];
         byteBuf.readBytes(vinArray);
-        String vin = new String(vinArray);
+        // 去除前导 0
+        String vin = new String(vinArray).replaceFirst("^0*", "");
 
         // 加密方式
         byteBuf.readByte();
