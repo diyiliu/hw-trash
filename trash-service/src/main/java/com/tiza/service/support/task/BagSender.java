@@ -1,15 +1,16 @@
 package com.tiza.service.support.task;
 
-import cn.com.tiza.tstar.datainterface.client.TStarSimpleClient;
 import com.tiza.plugin.cache.ICache;
 import com.tiza.plugin.util.CommonUtil;
 import com.tiza.plugin.util.HttpUtil;
 import com.tiza.plugin.util.JacksonUtil;
 import com.tiza.rp.support.model.HwHeader;
 import com.tiza.rp.support.parse.HwDataProcess;
+import com.tiza.service.support.client.TStarClientAdapter;
 import com.tiza.service.support.model.CardInfo;
 import com.tiza.service.support.task.abs.SendThread;
 import lombok.extern.slf4j.Slf4j;
+import org.apache.commons.lang3.StringUtils;
 
 import java.util.HashMap;
 import java.util.List;
@@ -26,15 +27,21 @@ public class BagSender extends SendThread {
 
     private ICache bagOptProvider;
 
-    private String ticket;
-
-    public BagSender(TStarSimpleClient tStarClient, HwDataProcess dataProcess) {
+    public BagSender(TStarClientAdapter tStarClient, HwDataProcess dataProcess) {
         this.tStarClient = tStarClient;
         this.dataProcess = dataProcess;
     }
 
+
     @Override
     public void run() {
+        String ticket = callInfo.getToken();
+        if (StringUtils.isEmpty(ticket)){
+            log.info("票据获取失败!");
+            return;
+        }
+        String baseUrl = callInfo.getUrl();
+
         // 实时计算解析参数
         Map data = sendData.getData();
         String terminal = sendData.getTerminal();
@@ -233,9 +240,5 @@ public class BagSender extends SendThread {
 
     public void setBagOptProvider(ICache bagOptProvider) {
         this.bagOptProvider = bagOptProvider;
-    }
-
-    public void setTicket(String ticket) {
-        this.ticket = ticket;
     }
 }

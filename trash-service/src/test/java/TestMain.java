@@ -1,9 +1,17 @@
 import com.tiza.plugin.util.CommonUtil;
 import com.tiza.plugin.util.JacksonUtil;
+import com.tiza.service.support.model.CallInfo;
 import com.tiza.service.support.model.CardInfo;
+import org.apache.commons.beanutils.BeanUtils;
+import org.apache.commons.io.FileUtils;
 import org.junit.Test;
+import org.springframework.core.io.DefaultResourceLoader;
+import org.springframework.core.io.Resource;
+import org.springframework.core.io.ResourceLoader;
 
+import java.util.ArrayList;
 import java.util.HashMap;
+import java.util.List;
 import java.util.Map;
 
 /**
@@ -78,5 +86,60 @@ public class TestMain {
         String str = "abc";
 
         System.out.println(CommonUtil.addPrefixZero(str, 11));
+    }
+
+
+    @Test
+    public void buildJson(){
+        CallInfo callInfo = new CallInfo();
+        callInfo.setUrl("http://47.107.166.242:8083");
+        callInfo.setAppId("sdkwijw");
+        callInfo.setAppSecret("4b93e958a900aea565a6a1582ce6ad81");
+        callInfo.setKey("");
+        callInfo.setName("中航环卫");
+
+        List l1 = new ArrayList();
+        l1.add(callInfo);
+
+        CallInfo callInfo2 = new CallInfo();
+        callInfo2.setUrl("http://zfsh.gltin.com/services/index.php");
+        callInfo2.setAppId("45293c0b2356873b");
+        callInfo2.setAppSecret("ee5e2e7d30f37a832a3c5e7806365eee");
+        callInfo2.setKey("");
+        callInfo2.setName("");
+
+        List l2 = new ArrayList();
+        l2.add(callInfo2);
+
+
+
+        Map m = new HashMap();
+        m.put("bin", l1);
+        m.put("bag", l2);
+
+        System.out.println(JacksonUtil.toJson(m));
+    }
+
+    @Test
+    public void readJson() throws Exception{
+        ResourceLoader loader = new DefaultResourceLoader();
+        Resource resource = loader.getResource("classpath:config/data.json");
+
+        String json = FileUtils.readFileToString(resource.getFile());
+//        System.out.println(json);
+
+        Map map = JacksonUtil.toObject(json, HashMap.class);
+
+        List list = (List) map.get("bin");
+        System.out.println(list.size());
+        Map m = (Map) list.get(0);
+
+        CallInfo callInfo = new CallInfo();
+        BeanUtils.copyProperties(callInfo, m);
+
+        System.out.println(callInfo.getName());
+
+
+
     }
 }

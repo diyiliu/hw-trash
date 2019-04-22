@@ -1,0 +1,25 @@
+{
+  "bin": [
+    {
+      "name": "中航环卫",
+      "key": "569846236086009856",
+      "url": "http://47.107.166.242:8083",
+      "appId": "sdkwijw",
+      "appSecret": "4b93e958a900aea565a6a1582ce6ad81",
+      "tokenPath": "/token?",
+      "tokenKey": "token"
+    }
+  ],
+  "bag": [
+    {
+      "name": "徐工博德尔",
+      "key": "539441956594384896",
+      "url": "http://zfsh.gltin.com/services/index.php",
+      "appId": "45293c0b2356873b",
+      "appSecret": "ee5e2e7d30f37a832a3c5e7806365eee",
+      "appSecret": "4b93e958a900aea565a6a1582ce6ad81",
+      "tokenPath": "?action=ticket&",
+      "tokenKey": "ticket"
+    }
+  ]
+}

@@ -1,20 +1,21 @@
 package com.tiza.service.support;
 
-import cn.com.tiza.tstar.datainterface.client.TStarSimpleClient;
+import com.tiza.plugin.bean.VehicleInfo;
 import com.tiza.plugin.cache.ICache;
-import com.tiza.plugin.util.HttpUtil;
 import com.tiza.plugin.util.JacksonUtil;
 import com.tiza.rp.support.model.SendData;
 import com.tiza.rp.support.parse.process.BagProcess;
 import com.tiza.rp.support.parse.process.TrashProcess;
+import com.tiza.service.support.client.TStarClientAdapter;
+import com.tiza.service.support.model.CallInfo;
 import com.tiza.service.support.task.BagSender;
 import com.tiza.service.support.task.TrashSender;
-import com.tiza.service.support.task.abs.SendThread;
 import kafka.consumer.ConsumerIterator;
 import kafka.consumer.KafkaStream;
 import kafka.javaapi.consumer.ConsumerConnector;
 import lombok.extern.slf4j.Slf4j;
-import org.apache.commons.lang3.StringUtils;
+import org.apache.commons.beanutils.BeanUtils;
+import org.springframework.beans.factory.InitializingBean;
 import org.springframework.beans.factory.annotation.Value;
 
 import javax.annotation.Resource;
@@ -31,22 +32,17 @@ import java.util.concurrent.Executors;
  */
 
 @Slf4j
-public class SendConsumer extends Thread {
-
-    /**
-     * 票据过期时间
-     **/
-    private static long BAG_EXPIRE_TIME = 0;
-    private static String BAG_TICKET = "";
-
-    /**
-     * 票据过期时间
-     **/
-    private static long BIN_EXPIRE_TIME = 0;
-    private static String BIN_TOKEN = "";
-
-    private String sendTopic;
+public class SendConsumer extends Thread implements InitializingBean {
     private ConsumerConnector consumer;
+
+    @Value("${kafka.sendTopic}")
+    private String sendTopic;
+
+    @Value("${tstar.protocol-jt808}")
+    private String protocolJt808;
+
+    @Value("${tstar.protocol-gb32960}")
+    private String protocolGb32960;
 
     @Resource
     private TrashProcess trashProcess;
@@ -55,46 +51,16 @@ public class SendConsumer extends Thread {
     private BagProcess bagProcess;
 
     @Resource
-    private TStarSimpleClient tStarClient;
+    private TStarClientAdapter tStarClient;
 
-    @Value("${tstar.protocol-jt808}")
-    private String protocolJt808;
-
-    @Value("${tstar.protocol-gb32960}")
-    private String protocolGb32960;
-
-    @Value("${trash.bin.url}")
-    private String binUrl;
-
-    @Value("${trash.bag.url}")
-    private String bagUrl;
-
-    /**
-     * 应用 ID
-     **/
-    @Value("${trash.bag.appId}")
-    private String bagAppId;
-
-    /**
-     * 应用密钥
-     **/
-    @Value("${trash.bag.appSecret}")
-    private String bagSecret;
-
-    /**
-     * 应用 ID
-     **/
-    @Value("${trash.bin.appId}")
-    private String binAppId;
-
-    /**
-     * 应用密钥
-     **/
-    @Value("${trash.bin.appSecret}")
-    private String binSecret;
+    @Resource
+    private ICache callInfoProvider;
 
     @Resource
     private ICache bagOptProvider;
+
+    @Resource
+    private ICache vehicleInfoProvider;
 
     private final ExecutorService trashThreadPool = Executors.newFixedThreadPool(3);
 
@@ -115,6 +81,15 @@ public class SendConsumer extends Thread {
                 SendData sendData = JacksonUtil.toObject(text, SendData.class);
                 Map data = sendData.getData();
 
+                String terminal = sendData.getTerminal();
+                if (!vehicleInfoProvider.containsKey(terminal)) {
+                    log.info("设备[{}]未注册!", terminal);
+                    return;
+                }
+
+                VehicleInfo vehicleInfo = (VehicleInfo) vehicleInfoProvider.get(terminal);
+                String unitId = vehicleInfo.getOwner();
+
                 // 协议类型
                 String terminalType = "";
                 String protocolType = (String) data.get("protocolType");
@@ -129,18 +104,12 @@ public class SendConsumer extends Thread {
                 String trashType = (String) data.get("trashType");
                 // 垃圾箱
                 if ("trash-bin".equals(trashType)) {
-                    // 获取公共票据
-                    String token = getBinToken();
-                    if (StringUtils.isEmpty(token)) {
-                        log.error("获取 API票据失败!");
-                        continue;
-                    }
+                    List list = (List) callInfoProvider.get("bin");
 
                     TrashSender trashSender = new TrashSender(tStarClient, trashProcess);
                     trashSender.setTerminalType(terminalType);
-                    trashSender.setBaseUrl(binUrl);
-                    trashSender.setData(sendData);
-                    trashSender.setToken(token);
+                    trashSender.setSendData(sendData);
+                    trashSender.setCallInfo(fetchCallInfo(list, unitId));
 
                     trashThreadPool.execute(trashSender);
                     continue;
@@ -148,20 +117,13 @@ public class SendConsumer extends Thread {
 
                 // 发放袋
                 if ("trash-bag".equals(trashType)) {
-                    // 获取公共票据
-                    String ticket = getBagTicket();
-                    if (StringUtils.isEmpty(ticket)) {
-                        log.error("获取 API票据失败!");
-                        continue;
-                    }
+                    List list = (List) callInfoProvider.get("bag");
 
                     BagSender bagSender = new BagSender(tStarClient, bagProcess);
                     bagSender.setTerminalType(terminalType);
-                    bagSender.setBaseUrl(bagUrl);
-                    bagSender.setData(sendData);
-                    // 扩展参数
-                    bagSender.setTicket(ticket);
+                    bagSender.setSendData(sendData);
                     bagSender.setBagOptProvider(bagOptProvider);
+                    bagSender.setCallInfo(fetchCallInfo(list, unitId));
 
                     bagThreadPool.execute(bagSender);
                 }
@@ -171,62 +133,30 @@ public class SendConsumer extends Thread {
         }
     }
 
-    public void setSendTopic(String sendTopic) {
-        this.sendTopic = sendTopic;
+    public CallInfo fetchCallInfo(List list, String key) {
+        CallInfo callInfo = new CallInfo();
+        for (int i = 0; i < list.size(); i++) {
+            Map map = (Map) list.get(i);
+            String id = (String) map.get("key");
+            try {
+                if (id.equals(key)) {
+                    BeanUtils.populate(callInfo, map);
+                    break;
+                }
+            } catch (Exception e) {
+                e.printStackTrace();
+            }
+        }
+
+        return callInfo;
     }
 
     public void setConsumer(ConsumerConnector consumer) {
         this.consumer = consumer;
     }
 
-    /**
-     * 获取垃圾发放机第三方 API 票据
-     *
-     * @return
-     * @throws Exception
-     */
-    public String getBagTicket() throws Exception {
-        if (System.currentTimeMillis() > BAG_EXPIRE_TIME) {
-            Map param = new HashMap();
-            param.put("action", "ticket");
-            param.put("appid", bagAppId);
-            param.put("secret", bagSecret);
-
-            String json = HttpUtil.getForString(bagUrl, param);
-            Map map = JacksonUtil.toObject(json, HashMap.class);
-            int errcode = (int) map.get("errcode");
-            if (0 == errcode) {
-                BAG_EXPIRE_TIME = System.currentTimeMillis() + (int) map.get("expires") * 1000;
-
-                BAG_TICKET = (String) map.get("ticket");
-            }
-        }
-
-        return BAG_TICKET;
-    }
-
-    /**
-     * 获取第三方 API 票据
-     *
-     * @return
-     * @throws Exception
-     */
-    public String getBinToken() throws Exception {
-        if (System.currentTimeMillis() > BIN_EXPIRE_TIME) {
-            Map param = new HashMap();
-            param.put("appid", binAppId);
-            param.put("secret", binSecret);
-
-            String json = HttpUtil.getForString(binUrl + "/token", param);
-            Map map = JacksonUtil.toObject(json, HashMap.class);
-            int errcode = (int) map.get("errcode");
-            if (0 == errcode) {
-                BIN_EXPIRE_TIME = System.currentTimeMillis() + (int) map.get("expires") * 1000;
-
-                BIN_TOKEN = (String) map.get("token");
-            }
-        }
-
-        return BIN_TOKEN;
+    @Override
+    public void afterPropertiesSet() {
+        this.start();
     }
 }

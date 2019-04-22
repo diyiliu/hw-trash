@@ -1,18 +1,25 @@
 package com.tiza.service.config;
 
-import cn.com.tiza.tstar.datainterface.client.TStarSimpleClient;
 import com.tiza.plugin.cache.ICache;
 import com.tiza.plugin.cache.ram.RamCacheProvider;
+import com.tiza.plugin.util.JacksonUtil;
 import com.tiza.service.support.SendConsumer;
+import com.tiza.service.support.client.TStarClientAdapter;
 import kafka.consumer.Consumer;
 import kafka.consumer.ConsumerConfig;
 import kafka.javaapi.consumer.ConsumerConnector;
+import org.apache.commons.io.FileUtils;
+import org.springframework.beans.factory.annotation.Value;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 import org.springframework.context.annotation.PropertySource;
-import org.springframework.core.env.Environment;
+import org.springframework.core.io.DefaultResourceLoader;
+import org.springframework.core.io.ResourceLoader;
+import org.springframework.scheduling.annotation.EnableScheduling;
 
-import javax.annotation.Resource;
+import java.io.File;
+import java.util.HashMap;
+import java.util.Map;
 import java.util.Properties;
 
 /**
@@ -22,16 +29,26 @@ import java.util.Properties;
  */
 
 @Configuration
+@EnableScheduling
 @PropertySource("classpath:config.properties")
 public class ServiceConfig {
 
-    @Resource
-    private Environment environment;
+    @Value("${env}")
+    private String env;
+
+    @Value("${zk.zkConnect}")
+    private String zkConnect;
+
+    @Value("${tstar.username}")
+    private String tstarUser;
+
+    @Value("${tstar.password}")
+    private String tstarPwd;
 
     @Bean
-    public SendConsumer sendConsumer(){
-        String zkConnect = environment.getProperty("zk.zkConnect");
-        String topic = environment.getProperty("kafka.sendTopic");
+    public SendConsumer sendConsumer() {
+        // 加载数据
+        buildData();
 
         // kafka 配置
         Properties props = new Properties();
@@ -47,25 +64,49 @@ public class ServiceConfig {
         ConsumerConfig consumerConfig = new ConsumerConfig(props);
         ConsumerConnector consumer = Consumer.createJavaConsumerConnector(consumerConfig);
 
-        // 消费topic
+        // 消费 topic
         SendConsumer sendConsumer = new SendConsumer();
-        sendConsumer.setSendTopic(topic);
         sendConsumer.setConsumer(consumer);
-        sendConsumer.start();
 
         return sendConsumer;
     }
 
-    @Bean
-    public TStarSimpleClient tStarClient() throws Exception{
-        String username = environment.getProperty("tstar.username");
-        String password = environment.getProperty("tstar.password");
+    @Bean(initMethod = "init")
+    public TStarClientAdapter tStarClient() {
+        return new TStarClientAdapter(tstarUser, tstarPwd, "config" + File.separator + env + File.separator);
+    }
 
-        return new TStarSimpleClient(username, password);
+    /**
+     * 加载接口数据
+     */
+    public void buildData() {
+        // 加载接口数据
+        try {
+            ResourceLoader resourceLoader = new DefaultResourceLoader();
+            File file = resourceLoader.getResource("classpath:config/data.json").getFile();
+
+            String data = FileUtils.readFileToString(file);
+            Map map = JacksonUtil.toObject(data, HashMap.class);
+            callInfoProvider().put(map);
+        } catch (Exception e) {
+            e.printStackTrace();
+        }
     }
 
     @Bean
-    public ICache bagOptProvider(){
+    public ICache bagOptProvider() {
+
+        return new RamCacheProvider();
+    }
+
+    @Bean
+    public ICache vehicleInfoProvider() {
+
+        return new RamCacheProvider();
+    }
+
+    @Bean
+    public ICache callInfoProvider() {
 
         return new RamCacheProvider();
     }

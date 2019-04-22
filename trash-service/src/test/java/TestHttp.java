@@ -61,9 +61,9 @@ public class TestHttp {
     public void test3() throws Exception {
         Map map = new HashMap() {
             {
-                this.put("token", "e7365f1a-ee2e-409a-8a4a-df9ed468e9d7");
-                this.put("type", "1");
-                this.put("auth", "2000000000014421");
+                this.put("token", "6a42adf7-2f75-478d-b61b-ba76e3ad3c4b");
+                this.put("type", "2");
+                this.put("auth", "2000000000040577");
             }
         };
 
@@ -107,7 +107,7 @@ public class TestHttp {
 
         Map param = new HashMap() {
             {
-                this.put("token", "c9ca4da2-9668-4038-8e66-6c9a25808813");
+                this.put("token", "0d9b15d4-11f3-48c4-94b4-369244fac8dc");
                 this.put("device", "27029947555" + "7511837323734");
             }
         };

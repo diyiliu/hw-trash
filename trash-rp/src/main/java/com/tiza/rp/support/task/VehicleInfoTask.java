@@ -33,20 +33,24 @@ public class VehicleInfoTask implements ITask {
     @Resource
     private ICache vehicleInfoProvider;
 
-    @Scheduled(fixedRate = 3 * 60 * 1000, initialDelay = 2 * 1000)
+    @Scheduled(fixedRate = 5 * 60 * 1000, initialDelay = 1 * 1000)
     public void execute() {
-        log.info("刷新车辆列表 ...");
+        log.info("刷新设备列表 ...");
 
         String sql = "SELECT   " +
                 "  `d`.`id` vehId,  " +
                 "  `t`.`terminal_no` terminal,  " +
                 "  `t`.`protocol_type` protocol," +
-                "  `d`.`hardware_type` vehType   " +
+                "  `d`.`hardware_type` vehType, " +
+                "  `su`.`id` unitId, " +
+                "  `su`.`unit_name` unitName " +
                 "FROM  " +
                 "  `biz_terminal` t   " +
                 "  INNER JOIN `biz_device` d   " +
                 "    ON `d`.`terminal_no` = `t`.`terminal_no`   " +
                 "    AND `d`.`is_deleted` = 0   " +
+                "  LEFT JOIN `sys_unit` su " +
+                "    ON `su`.`id` = `d`.`unit_id` " +
                 "WHERE `t`.`is_deleted` = 0 ";
 
         List<VehicleInfo> vehicleInfos = jdbcTemplate.query(sql, new RowMapper<VehicleInfo>() {
@@ -57,6 +61,8 @@ public class VehicleInfoTask implements ITask {
                 vehicleInfo.setTerminalId(rs.getString("terminal"));
                 vehicleInfo.setVehType(rs.getInt("vehType"));
                 vehicleInfo.setProtocol(rs.getString("protocol"));
+                vehicleInfo.setOwner(rs.getString("unitId"));
+                vehicleInfo.setOwnerName(rs.getString("unitName"));
 
                 return vehicleInfo;
             }

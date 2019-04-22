@@ -1,16 +1,17 @@
 package com.tiza.service.support.task;
 
-import cn.com.tiza.tstar.datainterface.client.TStarSimpleClient;
 import com.tiza.plugin.util.CommonUtil;
 import com.tiza.plugin.util.HttpUtil;
 import com.tiza.plugin.util.JacksonUtil;
 import com.tiza.rp.support.model.HwHeader;
 import com.tiza.rp.support.parse.HwDataProcess;
+import com.tiza.service.support.client.TStarClientAdapter;
 import com.tiza.service.support.task.abs.SendThread;
 import io.netty.buffer.ByteBuf;
 import io.netty.buffer.Unpooled;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.collections.CollectionUtils;
+import org.apache.commons.lang3.StringUtils;
 
 import java.util.Date;
 import java.util.HashMap;
@@ -26,15 +27,20 @@ import java.util.Map;
 @Slf4j
 public class TrashSender extends SendThread {
 
-    private String token;
-
-    public TrashSender(TStarSimpleClient tStarClient, HwDataProcess dataProcess) {
+    public TrashSender(TStarClientAdapter tStarClient, HwDataProcess dataProcess) {
         this.tStarClient = tStarClient;
         this.dataProcess = dataProcess;
     }
 
     @Override
     public void run() {
+        String token = callInfo.getToken();
+        if (StringUtils.isEmpty(token)){
+            log.info("票据获取失败!");
+            return;
+        }
+
+        String baseUrl = callInfo.getUrl();
         try {
             // 实时计算解析参数
             Map data = sendData.getData();
@@ -55,7 +61,11 @@ public class TrashSender extends SendThread {
             Map map;
             int errcode;
 
-            String reqDevice = terminal + "7511837323734";
+            String reqDevice = terminal;
+            if (callInfo.getName().contains("中航")){
+                reqDevice += "7511837323734";
+            }
+
             // 设备状态信息上传
             if (0x03 == id) {
                 content = dataProcess.pack(hwHeader, new Object[0]);
@@ -91,6 +101,9 @@ public class TrashSender extends SendThread {
                 errcode = (int) map.get("errcode");
                 if (errcode == 0) {
                     log.info("设备[{}]状态信息推送成功!", terminal);
+                }else {
+                    callInfo.setExpire(0);
+                    log.info("设备[{}]状态信息推送失败: {}", terminal, map.get("errmsg"));
                 }
             }
             // 用户信息查询
@@ -113,6 +126,7 @@ public class TrashSender extends SendThread {
                     Object[] objects = new Object[]{1, user, account, money};
                     content = dataProcess.pack(hwHeader, objects);
                 }else {
+                    callInfo.setExpire(0);
                     log.info("设备[{}]用户信息查询失败: {}", terminal, map.get("errmsg"));
                 }
             }
@@ -136,8 +150,11 @@ public class TrashSender extends SendThread {
                 int money = 0;
                 if (errcode == 0) {
                     status = 1;
-                    money = (int) map.get("money");
+                    if (map.containsKey("money")){
+                        money = (int) map.get("money");
+                    }
                 }else {
+                    callInfo.setExpire(0);
                     log.info("设备[{}]投放数据推送失败: {}", terminal, map.get("errmsg"));
                 }
 
@@ -157,6 +174,9 @@ public class TrashSender extends SendThread {
                 errcode = (int) map.get("errcode");
                 if (errcode == 0) {
                     log.info("设备[{}]故障码数据推送成功!", terminal);
+                }else {
+                    callInfo.setExpire(0);
+                    log.info("设备[{}]故障码数据推送失败: {}", terminal, map.get("errmsg"));
                 }
             }
             // 清理签到
@@ -175,6 +195,8 @@ public class TrashSender extends SendThread {
                 errcode = (int) map.get("errcode");
                 if (errcode == 0) {
                     log.info("设备[{}]清理签到数据推送成功!", terminal);
+                }else {
+                    callInfo.setExpire(0);
                 }
             }
 
@@ -184,9 +206,5 @@ public class TrashSender extends SendThread {
         } catch (Exception e) {
             e.printStackTrace();
         }
-    }
-
-    public void setToken(String token) {
-        this.token = token;
     }
 }

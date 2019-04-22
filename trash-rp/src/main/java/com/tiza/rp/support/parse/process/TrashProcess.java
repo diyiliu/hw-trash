@@ -89,7 +89,7 @@ public class TrashProcess extends HwDataProcess {
             List list = new ArrayList();
             for (int i = 0; i < n; i++) {
                 int category = buf.readByte();
-                int distance = buf.readByte();
+                int distance = buf.readUnsignedByte();
 
                 /*
                 Map map = new HashMap();

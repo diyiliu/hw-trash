@@ -5,12 +5,13 @@
        xsi:schemaLocation="http://www.springframework.org/schema/beans
            http://www.springframework.org/schema/beans/spring-beans.xsd
            http://www.springframework.org/schema/context
-           http://www.springframework.org/schema/context/spring-context.xsd ">
+           http://www.springframework.org/schema/context/spring-context.xsd">
 
     <!-- 开启注解扫描 -->
     <context:component-scan base-package="com.tiza.service"/>
+
     <!-- 加载配置文件 -->
-    <context:property-placeholder location="classpath:config.properties,classpath:jdbc.properties"/>
+    <context:property-placeholder location="classpath:config/${env}/jdbc.properties,classpath:config/${env}/trash.properties"/>
 
     <!-- 数据源 -->
     <bean id="dataSource" class="com.alibaba.druid.pool.DruidDataSource" init-method="init" destroy-method="close">
@@ -46,8 +47,11 @@
         <property name="dataSource" ref="dataSource"/>
     </bean>
 
-    <!-- 垃圾箱、垃圾袋配置 -->
-    <bean class="com.tiza.rp.support.parse.HwDataProcess" />
-    <bean id="trashProcess" class="com.tiza.rp.support.parse.process.TrashProcess" />
-    <bean id="bagProcess" class="com.tiza.rp.support.parse.process.BagProcess" />
+    <!-- 垃圾箱、垃圾袋配置 (引入实时计算类) -->
+    <bean class="com.tiza.rp.support.parse.HwDataProcess"/>
+    <bean id="trashProcess" class="com.tiza.rp.support.parse.process.TrashProcess"/>
+    <bean id="bagProcess" class="com.tiza.rp.support.parse.process.BagProcess"/>
+
+    <!--设备定时缓存, 间隔 5 分钟 -->
+    <bean class="com.tiza.rp.support.task.VehicleInfoTask"/>
 </beans>

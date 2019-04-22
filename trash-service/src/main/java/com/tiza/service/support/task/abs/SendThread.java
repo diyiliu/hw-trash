@@ -1,10 +1,11 @@
 package com.tiza.service.support.task.abs;
 
-import cn.com.tiza.tstar.datainterface.client.TStarSimpleClient;
 import cn.com.tiza.tstar.datainterface.client.entity.ClientCmdSendResult;
 import com.tiza.plugin.util.CommonUtil;
 import com.tiza.rp.support.model.SendData;
 import com.tiza.rp.support.parse.HwDataProcess;
+import com.tiza.service.support.client.TStarClientAdapter;
+import com.tiza.service.support.model.CallInfo;
 import lombok.extern.slf4j.Slf4j;
 
 /**
@@ -14,10 +15,10 @@ import lombok.extern.slf4j.Slf4j;
  */
 
 @Slf4j
-public abstract class SendThread implements Runnable {
+public abstract class  SendThread implements Runnable {
 
     // tstar 客户端
-    protected TStarSimpleClient tStarClient;
+    protected TStarClientAdapter tStarClient;
 
     // tstar 设备类型
     protected String terminalType;
@@ -28,8 +29,7 @@ public abstract class SendThread implements Runnable {
     // 处理类
     protected HwDataProcess dataProcess;
 
-    // 请求路径
-    protected String baseUrl;
+    protected CallInfo callInfo;
 
     public void toSend(String terminal, int cmd, int serial, byte[] content) throws Exception {
         byte[] bytes = null;
@@ -45,9 +45,9 @@ public abstract class SendThread implements Runnable {
 
         // 无协议匹配
         if (bytes == null){
-
             return;
         }
+
         log.info("指令下发内容[{}] ... ", CommonUtil.bytesToStr(bytes));
 
         // TStar 指令下发
@@ -55,17 +55,15 @@ public abstract class SendThread implements Runnable {
         log.info("TSTAR 执行结果: [{}]", sendResult.getIsSuccess() ? "成功" : "失败");
     }
 
-
-
     public void setTerminalType(String terminalType) {
         this.terminalType = terminalType;
     }
 
-    public void setData(SendData sendData) {
+    public void setSendData(SendData sendData) {
         this.sendData = sendData;
     }
 
-    public void setBaseUrl(String baseUrl) {
-        this.baseUrl = baseUrl;
+    public void setCallInfo(CallInfo callInfo) {
+        this.callInfo = callInfo;
     }
 }
