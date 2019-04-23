@@ -17,7 +17,8 @@ import org.apache.commons.beanutils.BeanUtils;
 import org.apache.commons.io.FileUtils;
 import org.apache.commons.lang3.StringUtils;
 import org.springframework.beans.factory.annotation.Value;
-import org.springframework.core.io.DefaultResourceLoader;
+import org.springframework.core.io.ClassPathResource;
+import org.springframework.core.io.FileSystemResourceLoader;
 import org.springframework.core.io.ResourceLoader;
 
 import javax.annotation.Resource;
@@ -149,10 +150,9 @@ public class SendConsumer extends Thread {
     public void buildData() {
         // 加载接口数据
         try {
-            ResourceLoader resourceLoader = new DefaultResourceLoader();
-            File file = resourceLoader.getResource("classpath:config/" + env + "/data.json").getFile();
-
-            String data = FileUtils.readFileToString(file);
+            String path = "conf/" + env + "/data.json";
+            File file = new ClassPathResource(path).getFile();
+            String data = FileUtils.readFileToString(file, "UTF-8");
             Map map = JacksonUtil.toObject(data, HashMap.class);
             callInfoProvider.put(map);
         } catch (Exception e) {

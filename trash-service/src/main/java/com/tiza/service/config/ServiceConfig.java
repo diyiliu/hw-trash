@@ -62,7 +62,7 @@ public class ServiceConfig {
 
     @Bean(initMethod = "init")
     public TStarClientAdapter tStarClient() {
-        return new TStarClientAdapter(tstarUser, tstarPwd, "config" + File.separator + env + File.separator);
+        return new TStarClientAdapter(tstarUser, tstarPwd, "conf" + File.separator + env + File.separator);
     }
 
     @Bean

@@ -11,7 +11,7 @@
     <context:component-scan base-package="com.tiza.service"/>
 
     <!-- 加载配置文件 -->
-    <context:property-placeholder location="classpath:config/${env}/jdbc.properties,classpath:config/${env}/trash.properties"/>
+    <context:property-placeholder location="classpath:conf/${env}/jdbc.properties,classpath:conf/${env}/trash.properties"/>
 
     <!-- 数据源 -->
     <bean id="dataSource" class="com.alibaba.druid.pool.DruidDataSource" init-method="init" destroy-method="close">
