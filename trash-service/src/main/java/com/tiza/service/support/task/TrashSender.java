@@ -34,14 +34,14 @@ public class TrashSender extends SendThread {
 
     @Override
     public void run() {
-        String token = callInfo.getToken();
-        if (StringUtils.isEmpty(token)){
-            log.info("票据获取失败!");
-            return;
-        }
-
-        String baseUrl = callInfo.getUrl();
         try {
+            String token = callInfo.getToken();
+            if (StringUtils.isEmpty(token)) {
+                log.info("票据获取失败!");
+                return;
+            }
+            String baseUrl = callInfo.getUrl();
+
             // 实时计算解析参数
             Map data = sendData.getData();
             String terminal = sendData.getTerminal();
@@ -62,7 +62,7 @@ public class TrashSender extends SendThread {
             int errcode;
 
             String reqDevice = terminal;
-            if (callInfo.getName().contains("中航")){
+            if (callInfo.getName().contains("中航")) {
                 reqDevice += "7511837323734";
             }
 
@@ -85,8 +85,8 @@ public class TrashSender extends SendThread {
                 double temperature = (double) data.get("temperature");
                 List<Integer> list = (List) data.get("binsRange");
                 String capacities = "";
-                if (CollectionUtils.isNotEmpty(list)){
-                    for (Integer i: list){
+                if (CollectionUtils.isNotEmpty(list)) {
+                    for (Integer i : list) {
                         capacities += i + ",";
                     }
                 }
@@ -101,7 +101,7 @@ public class TrashSender extends SendThread {
                 errcode = (int) map.get("errcode");
                 if (errcode == 0) {
                     log.info("设备[{}]状态信息推送成功!", terminal);
-                }else {
+                } else {
                     callInfo.setExpire(0);
                     log.info("设备[{}]状态信息推送失败: {}", terminal, map.get("errmsg"));
                 }
@@ -125,7 +125,7 @@ public class TrashSender extends SendThread {
 
                     Object[] objects = new Object[]{1, user, account, money};
                     content = dataProcess.pack(hwHeader, objects);
-                }else {
+                } else {
                     callInfo.setExpire(0);
                     log.info("设备[{}]用户信息查询失败: {}", terminal, map.get("errmsg"));
                 }
@@ -142,7 +142,7 @@ public class TrashSender extends SendThread {
                 jsonMap.put("auth", authContent);
                 jsonMap.put("data", data.get("binsWeight"));
 
-                json = HttpUtil.postWithJsonAndParameter(baseUrl + "/throwin", JacksonUtil.toJson(jsonMap),param);
+                json = HttpUtil.postWithJsonAndParameter(baseUrl + "/throwin", JacksonUtil.toJson(jsonMap), param);
                 map = JacksonUtil.toObject(json, HashMap.class);
                 errcode = (int) map.get("errcode");
 
@@ -150,10 +150,10 @@ public class TrashSender extends SendThread {
                 int money = 0;
                 if (errcode == 0) {
                     status = 1;
-                    if (map.containsKey("money")){
+                    if (map.containsKey("money")) {
                         money = (int) map.get("money");
                     }
-                }else {
+                } else {
                     callInfo.setExpire(0);
                     log.info("设备[{}]投放数据推送失败: {}", terminal, map.get("errmsg"));
                 }
@@ -162,25 +162,25 @@ public class TrashSender extends SendThread {
                 content = dataProcess.pack(hwHeader, objects);
             }
             // 故障码上传
-            else if (0x06 == id ){
+            else if (0x06 == id) {
                 content = dataProcess.pack(hwHeader, new Object[0]);
 
                 param.put("token", token);
                 param.put("device", reqDevice);
 
                 List list = (List) data.get("binsFault");
-                json = HttpUtil.postWithJsonAndParameter(baseUrl + "/throwin", JacksonUtil.toJson(list),param);
+                json = HttpUtil.postWithJsonAndParameter(baseUrl + "/throwin", JacksonUtil.toJson(list), param);
                 map = JacksonUtil.toObject(json, HashMap.class);
                 errcode = (int) map.get("errcode");
                 if (errcode == 0) {
                     log.info("设备[{}]故障码数据推送成功!", terminal);
-                }else {
+                } else {
                     callInfo.setExpire(0);
                     log.info("设备[{}]故障码数据推送失败: {}", terminal, map.get("errmsg"));
                 }
             }
             // 清理签到
-            else if (0x07 == id ){
+            else if (0x07 == id) {
                 content = dataProcess.pack(hwHeader, new Object[0]);
 
                 int authType = (int) data.get("authType");
@@ -195,7 +195,7 @@ public class TrashSender extends SendThread {
                 errcode = (int) map.get("errcode");
                 if (errcode == 0) {
                     log.info("设备[{}]清理签到数据推送成功!", terminal);
-                }else {
+                } else {
                     callInfo.setExpire(0);
                 }
             }
@@ -205,6 +205,7 @@ public class TrashSender extends SendThread {
             }
         } catch (Exception e) {
             e.printStackTrace();
+            log.error(e.getMessage());
         }
     }
 }

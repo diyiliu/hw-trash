@@ -1,0 +1,20 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<project version="4">
+  <component name="ProjectModuleManager">
+    <modules>
+      <module fileurl="file://$PROJECT_DIR$/hw-trash.iml" filepath="$PROJECT_DIR$/hw-trash.iml" />
+      <module fileurl="file://$PROJECT_DIR$/.idea/modules/trash-gw/trash-gw.iml" filepath="$PROJECT_DIR$/.idea/modules/trash-gw/trash-gw.iml" group="trash-gw" />
+      <module fileurl="file://$PROJECT_DIR$/.idea/modules/trash-gw/trash-gw_main.iml" filepath="$PROJECT_DIR$/.idea/modules/trash-gw/trash-gw_main.iml" group="trash-gw" />
+      <module fileurl="file://$PROJECT_DIR$/.idea/modules/trash-gw/trash-gw_test.iml" filepath="$PROJECT_DIR$/.idea/modules/trash-gw/trash-gw_test.iml" group="trash-gw" />
+      <module fileurl="file://$PROJECT_DIR$/.idea/modules/trash-rp/trash-rp.iml" filepath="$PROJECT_DIR$/.idea/modules/trash-rp/trash-rp.iml" group="trash-rp" />
+      <module fileurl="file://$PROJECT_DIR$/.idea/modules/trash-rp/trash-rp_main.iml" filepath="$PROJECT_DIR$/.idea/modules/trash-rp/trash-rp_main.iml" group="trash-rp" />
+      <module fileurl="file://$PROJECT_DIR$/.idea/modules/trash-rp/trash-rp_test.iml" filepath="$PROJECT_DIR$/.idea/modules/trash-rp/trash-rp_test.iml" group="trash-rp" />
+      <module fileurl="file://$PROJECT_DIR$/.idea/modules/trash-service/trash-service.iml" filepath="$PROJECT_DIR$/.idea/modules/trash-service/trash-service.iml" group="trash-service" />
+      <module fileurl="file://$PROJECT_DIR$/.idea/modules/trash-service/trash-service_main.iml" filepath="$PROJECT_DIR$/.idea/modules/trash-service/trash-service_main.iml" group="trash-service" />
+      <module fileurl="file://$PROJECT_DIR$/.idea/modules/trash-service/trash-service_test.iml" filepath="$PROJECT_DIR$/.idea/modules/trash-service/trash-service_test.iml" group="trash-service" />
+      <module fileurl="file://$PROJECT_DIR$/.idea/modules/-264075027/tstar-plugin.iml" filepath="$PROJECT_DIR$/.idea/modules/-264075027/tstar-plugin.iml" group="tstar-plugin" />
+      <module fileurl="file://$PROJECT_DIR$/.idea/modules/-264075027/tstar-plugin_main.iml" filepath="$PROJECT_DIR$/.idea/modules/-264075027/tstar-plugin_main.iml" group="tstar-plugin" />
+      <module fileurl="file://$PROJECT_DIR$/.idea/modules/-264075027/tstar-plugin_test.iml" filepath="$PROJECT_DIR$/.idea/modules/-264075027/tstar-plugin_test.iml" group="tstar-plugin" />
+    </modules>
+  </component>
+</project>

@@ -35,27 +35,28 @@ public class BagSender extends SendThread {
 
     @Override
     public void run() {
-        String ticket = callInfo.getToken();
-        if (StringUtils.isEmpty(ticket)){
-            log.info("票据获取失败!");
-            return;
-        }
-        String baseUrl = callInfo.getUrl();
-
-        // 实时计算解析参数
-        Map data = sendData.getData();
-        String terminal = sendData.getTerminal();
-        // 透传指令ID
-        int id = (int) data.get("id");
-
-        byte[] bytes = CommonUtil.hexStringToBytes(sendData.getContent());
-        HwHeader hwHeader = (HwHeader) dataProcess.parseHeader(bytes);
-        hwHeader.setTerminalId(terminal);
-
-        int cmd = sendData.getRespCmd();
-        int readWrite = hwHeader.getReadWrite();
-
         try {
+            String ticket = callInfo.getToken();
+            if (StringUtils.isEmpty(ticket)) {
+                log.info("票据获取失败!");
+                return;
+            }
+            String baseUrl = callInfo.getUrl();
+
+            // 实时计算解析参数
+            Map data = sendData.getData();
+            String terminal = sendData.getTerminal();
+            // 透传指令ID
+            int id = (int) data.get("id");
+
+            byte[] bytes = CommonUtil.hexStringToBytes(sendData.getContent());
+            HwHeader hwHeader = (HwHeader) dataProcess.parseHeader(bytes);
+            hwHeader.setTerminalId(terminal);
+
+            int cmd = sendData.getRespCmd();
+            int readWrite = hwHeader.getReadWrite();
+
+
             byte[] content = null;
             int status = 2;
             if (0x20 == readWrite) {
@@ -235,6 +236,7 @@ public class BagSender extends SendThread {
             toSend(sendData.getTerminal(), cmd, CommonUtil.getMsgSerial(), content);
         } catch (Exception e) {
             e.printStackTrace();
+            log.error(e.getMessage());
         }
     }
 

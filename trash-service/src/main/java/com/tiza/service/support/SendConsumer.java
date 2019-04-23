@@ -1,6 +1,5 @@
 package com.tiza.service.support;
 
-import com.tiza.plugin.bean.VehicleInfo;
 import com.tiza.plugin.cache.ICache;
 import com.tiza.plugin.util.JacksonUtil;
 import com.tiza.rp.support.model.SendData;
@@ -15,13 +14,19 @@ import kafka.consumer.KafkaStream;
 import kafka.javaapi.consumer.ConsumerConnector;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.beanutils.BeanUtils;
-import org.springframework.beans.factory.InitializingBean;
+import org.apache.commons.io.FileUtils;
+import org.apache.commons.lang3.StringUtils;
 import org.springframework.beans.factory.annotation.Value;
+import org.springframework.core.io.DefaultResourceLoader;
+import org.springframework.core.io.ResourceLoader;
 
 import javax.annotation.Resource;
+import java.io.File;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.concurrent.ConcurrentHashMap;
+import java.util.concurrent.ConcurrentMap;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
 
@@ -32,8 +37,11 @@ import java.util.concurrent.Executors;
  */
 
 @Slf4j
-public class SendConsumer extends Thread implements InitializingBean {
+public class SendConsumer extends Thread {
     private ConsumerConnector consumer;
+
+    @Value("${env}")
+    private String env;
 
     @Value("${kafka.sendTopic}")
     private String sendTopic;
@@ -59,12 +67,16 @@ public class SendConsumer extends Thread implements InitializingBean {
     @Resource
     private ICache bagOptProvider;
 
-    @Resource
-    private ICache vehicleInfoProvider;
-
     private final ExecutorService trashThreadPool = Executors.newFixedThreadPool(3);
 
     private final ExecutorService bagThreadPool = Executors.newFixedThreadPool(3);
+
+    private final static ConcurrentMap callMap = new ConcurrentHashMap();
+
+    public void init() {
+        buildData();
+        this.start();
+    }
 
     @Override
     public void run() {
@@ -81,14 +93,11 @@ public class SendConsumer extends Thread implements InitializingBean {
                 SendData sendData = JacksonUtil.toObject(text, SendData.class);
                 Map data = sendData.getData();
 
-                String terminal = sendData.getTerminal();
-                if (!vehicleInfoProvider.containsKey(terminal)) {
-                    log.info("设备[{}]未注册!", terminal);
-                    return;
+                String unitId = sendData.getOwner();
+                if (StringUtils.isEmpty(unitId)) {
+                    log.info("设备[{}]机构信息不存在!", sendData.getTerminal());
+                    continue;
                 }
-
-                VehicleInfo vehicleInfo = (VehicleInfo) vehicleInfoProvider.get(terminal);
-                String unitId = vehicleInfo.getOwner();
 
                 // 协议类型
                 String terminalType = "";
@@ -126,6 +135,7 @@ public class SendConsumer extends Thread implements InitializingBean {
                     bagSender.setCallInfo(fetchCallInfo(list, unitId));
 
                     bagThreadPool.execute(bagSender);
+                    continue;
                 }
             } catch (Exception e) {
                 e.printStackTrace();
@@ -133,7 +143,36 @@ public class SendConsumer extends Thread implements InitializingBean {
         }
     }
 
+    /**
+     * 加载接口数据
+     */
+    public void buildData() {
+        // 加载接口数据
+        try {
+            ResourceLoader resourceLoader = new DefaultResourceLoader();
+            File file = resourceLoader.getResource("classpath:config/" + env + "/data.json").getFile();
+
+            String data = FileUtils.readFileToString(file);
+            Map map = JacksonUtil.toObject(data, HashMap.class);
+            callInfoProvider.put(map);
+        } catch (Exception e) {
+            e.printStackTrace();
+        }
+    }
+
+    /**
+     * 获取设备接口数据
+     *
+     * @param list
+     * @param key
+     * @return
+     */
     public CallInfo fetchCallInfo(List list, String key) {
+        if (callMap.containsKey(key)) {
+
+            return (CallInfo) callMap.get(key);
+        }
+
         CallInfo callInfo = new CallInfo();
         for (int i = 0; i < list.size(); i++) {
             Map map = (Map) list.get(i);
@@ -147,16 +186,12 @@ public class SendConsumer extends Thread implements InitializingBean {
                 e.printStackTrace();
             }
         }
+        callMap.put(key, callInfo);
 
         return callInfo;
     }
 
     public void setConsumer(ConsumerConnector consumer) {
         this.consumer = consumer;
-    }
-
-    @Override
-    public void afterPropertiesSet() {
-        this.start();
     }
 }

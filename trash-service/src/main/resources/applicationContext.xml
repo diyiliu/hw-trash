@@ -51,7 +51,4 @@
     <bean class="com.tiza.rp.support.parse.HwDataProcess"/>
     <bean id="trashProcess" class="com.tiza.rp.support.parse.process.TrashProcess"/>
     <bean id="bagProcess" class="com.tiza.rp.support.parse.process.BagProcess"/>
-
-    <!--设备定时缓存, 间隔 5 分钟 -->
-    <bean class="com.tiza.rp.support.task.VehicleInfoTask"/>
 </beans>

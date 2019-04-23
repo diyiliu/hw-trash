@@ -30,4 +30,7 @@ public class SendData {
 
     /** 解析时间 **/
     private Long time;
+
+    /** 所属机构 **/
+    private String owner;
 }

@@ -107,36 +107,41 @@ public class HwDataParse extends DataParseAdapter {
             return;
         }
 
-        HwHeader hwHeader = (HwHeader) hwDataProcess.parseHeader(bytes);
-        if (hwHeader != null) {
-            hwHeader.setTerminalId(terminalId);
-            // 设置网关时间
-            hwHeader.setTime(gwTime);
+        try {
+            HwHeader hwHeader = (HwHeader) hwDataProcess.parseHeader(bytes);
+            if (hwHeader != null) {
+                hwHeader.setTerminalId(terminalId);
+                // 设置网关时间
+                hwHeader.setTime(gwTime);
 
-            hwDataProcess.parse(hwHeader.getContent(), hwHeader);
-            Map headerMap = hwHeader.getParamMap();
-            if (headerMap != null) {
-                Map param = new HashMap();
-                param.put("id", hwHeader.getCmd());
-                param.put("trashType", trashType);
-                param.put("protocolType", protocolType);
-                param.putAll(headerMap);
+                hwDataProcess.parse(hwHeader.getContent(), hwHeader);
+                Map headerMap = hwHeader.getParamMap();
+                if (headerMap != null) {
+                    Map param = new HashMap();
+                    param.put("id", hwHeader.getCmd());
+                    param.put("trashType", trashType);
+                    param.put("protocolType", protocolType);
+                    param.putAll(headerMap);
 
-                // 构造数据
-                SendData sendData = new SendData();
-                sendData.setTerminal(terminalId);
-                sendData.setCmd(cmd);
-                sendData.setRespCmd(respCmd);
-                sendData.setContent(CommonUtil.bytesToStr(bytes));
-                sendData.setData(param);
-                sendData.setTime(System.currentTimeMillis());
+                    // 构造数据
+                    SendData sendData = new SendData();
+                    sendData.setOwner(vehicleInfo.getOwner());
+                    sendData.setTerminal(terminalId);
+                    sendData.setCmd(cmd);
+                    sendData.setRespCmd(respCmd);
+                    sendData.setContent(CommonUtil.bytesToStr(bytes));
+                    sendData.setData(param);
+                    sendData.setTime(System.currentTimeMillis());
 
-                // 写入 kafka
-                sendToKafka(sendData);
+                    // 写入 kafka
+                    sendToKafka(sendData);
 
-                // 更新工况表
-                updateWorkInfo(hwHeader);
+                    // 更新工况表
+                    updateWorkInfo(hwHeader);
+                }
             }
+        } catch (Exception e) {
+            e.printStackTrace();
         }
     }
 
