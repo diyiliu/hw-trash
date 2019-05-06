@@ -36,7 +36,7 @@ public class BagSender extends SendThread {
     @Override
     public void run() {
         try {
-            String ticket = callInfo.getToken();
+            String ticket = callInfo.fetchToken();
             if (StringUtils.isEmpty(ticket)) {
                 log.info("票据获取失败!");
                 return;

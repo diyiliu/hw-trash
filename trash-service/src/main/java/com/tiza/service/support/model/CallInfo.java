@@ -35,7 +35,7 @@ public class CallInfo {
     /** 获取 token Json 中的 key **/
     private String tokenKey;
 
-    public String getToken(){
+    public String fetchToken(){
         if (System.currentTimeMillis() > expire){
             Map param = new HashMap();
             param.put("appid", appId);
@@ -47,8 +47,7 @@ public class CallInfo {
                 int errcode = (int) map.get("errcode");
                 if (0 == errcode) {
                     expire = System.currentTimeMillis() + (int) map.get("expires") * 1000;
-
-                    return  (String) map.get(tokenKey);
+                    token = (String) map.get(tokenKey);
                 }
             } catch (Exception e) {
                 e.printStackTrace();

@@ -10,6 +10,7 @@ import com.tiza.plugin.util.CommonUtil;
 import com.tiza.plugin.util.JacksonUtil;
 import com.tiza.plugin.util.SpringUtil;
 import lombok.extern.slf4j.Slf4j;
+import org.springframework.beans.BeansException;
 
 /**
  * Description: Jt808ParseHandler
@@ -31,27 +32,30 @@ public class Jt808ParseHandler extends BaseHandle {
             return null;
         }
 
-        // 解析消息头
-        Jt808Header header = (Jt808Header) process.parseHeader(rpTuple.getMsgBody());
-        if (header == null) {
+        try {
+            // 解析消息头
+            Jt808Header header = (Jt808Header) process.parseHeader(rpTuple.getMsgBody());
+            if (header == null) {
+                return null;
+            }
 
-            return null;
+            String terminalId = header.getTerminalId();
+            ICache vehicleInfoProvider = SpringUtil.getBean("vehicleInfoProvider");
+
+            //log.info("设备缓存: {}", JacksonUtil.toJson(vehicleInfoProvider.getKeys()));
+            // 验证设备是否绑定车辆
+            if (!vehicleInfoProvider.containsKey(terminalId)) {
+                log.warn("设备[{}]未绑定车辆信息!", terminalId);
+
+                return null;
+            }
+            header.setGwTime(rpTuple.getTime());
+            // 指令解析
+            process.parse(header.getContent(), header);
+        } catch (BeansException e) {
+            e.printStackTrace();
         }
 
-        String terminalId = header.getTerminalId();
-        ICache vehicleInfoProvider = SpringUtil.getBean("vehicleInfoProvider");
-
-        //log.info("设备缓存: {}", JacksonUtil.toJson(vehicleInfoProvider.getKeys()));
-        // 验证设备是否绑定车辆
-        if (!vehicleInfoProvider.containsKey(terminalId)) {
-            log.warn("设备[{}]未绑定车辆信息!", terminalId);
-
-            return null;
-        }
-
-        header.setGwTime(rpTuple.getTime());
-        // 指令解析
-        process.parse(header.getContent(), header);
 
         return rpTuple;
     }

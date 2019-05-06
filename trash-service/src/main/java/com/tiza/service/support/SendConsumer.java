@@ -110,16 +110,18 @@ public class SendConsumer extends Thread {
                     terminalType = protocolGb32960;
                 }
 
+
                 // 设备类型
                 String trashType = (String) data.get("trashType");
                 // 垃圾箱
                 if ("trash-bin".equals(trashType)) {
                     List list = (List) callInfoProvider.get("bin");
+                    CallInfo callInfo = fetchCallInfo(list, unitId);
 
                     TrashSender trashSender = new TrashSender(tStarClient, trashProcess);
                     trashSender.setTerminalType(terminalType);
                     trashSender.setSendData(sendData);
-                    trashSender.setCallInfo(fetchCallInfo(list, unitId));
+                    trashSender.setCallInfo(callInfo);
 
                     trashThreadPool.execute(trashSender);
                     continue;
@@ -129,11 +131,13 @@ public class SendConsumer extends Thread {
                 if ("trash-bag".equals(trashType)) {
                     List list = (List) callInfoProvider.get("bag");
 
+                    CallInfo callInfo = fetchCallInfo(list, unitId);
+
                     BagSender bagSender = new BagSender(tStarClient, bagProcess);
                     bagSender.setTerminalType(terminalType);
                     bagSender.setSendData(sendData);
                     bagSender.setBagOptProvider(bagOptProvider);
-                    bagSender.setCallInfo(fetchCallInfo(list, unitId));
+                    bagSender.setCallInfo(callInfo);
 
                     bagThreadPool.execute(bagSender);
                     continue;

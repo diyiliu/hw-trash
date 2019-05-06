@@ -142,4 +142,13 @@ public class TestMain {
 
 
     }
+
+
+    @Test
+    public void testUser(){
+        String str = "51464C4A3030303030303030303030303031303135303031";
+
+        str = new String(CommonUtil.hexStringToBytes(str));
+        System.out.println(str);
+    }
 }

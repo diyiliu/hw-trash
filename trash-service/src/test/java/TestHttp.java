@@ -41,19 +41,23 @@ public class TestHttp {
     }
 
 
-    public static String url2 = "http://47.107.166.242:8083/";
+//    public static String url2 = "http://47.107.166.242:8083/";
+//    public static String url2 = "http://58.213.118.25:8081/trashApi/";
+    public static String url2 = "http://192.168.1.180:9580/trashApi/";
+
 
     @Test
     public void test2() throws Exception {
         Map map = new HashMap() {
             {
-                this.put("appid", "sdkwijw");
-                this.put("secret", "4b93e958a900aea565a6a1582ce6ad81");
+                this.put("appid", "TZ0872");
+                this.put("secret", "TIZA123456");
+//                this.put("appid", "sdkwijw");
+//                this.put("secret", "4b93e958a900aea565a6a1582ce6ad81");
             }
         };
 
         String result = HttpUtil.getForString(url2 + "token", map);
-
         System.out.println(result);
     }
 
@@ -61,13 +65,17 @@ public class TestHttp {
     public void test3() throws Exception {
         Map map = new HashMap() {
             {
-                this.put("token", "6a42adf7-2f75-478d-b61b-ba76e3ad3c4b");
-                this.put("type", "2");
-                this.put("auth", "2000000000040577");
+                this.put("token", "AE72BFC1DB974AB49879AC3E5FC3041E");
+//                this.put("type", "1");
+//                this.put("auth", "1016");
+//                this.put("device", "1000094");
+                this.put("type", "5");
+                this.put("auth", "QFLJ20000000000001016216");
+                this.put("device", "27029947555");
             }
         };
 
-        String result = HttpUtil.getForString("http://47.107.166.242:8083/userinfo", map);
+        String result = HttpUtil.getForString(url2 + "userinfo", map);
 
         System.out.println(result);
     }
@@ -99,16 +107,16 @@ public class TestHttp {
 
         Map map = new HashMap() {
             {
-                this.put("type", "4");
-                this.put("auth", "");
+                this.put("type", "5");
+                this.put("auth", "QFLJ20000000000001016216");
                 this.put("data", list);
             }
         };
 
         Map param = new HashMap() {
             {
-                this.put("token", "0d9b15d4-11f3-48c4-94b4-369244fac8dc");
-                this.put("device", "27029947555" + "7511837323734");
+                this.put("token", "6B9ABC4569EA437AB8941F7446AAB035");
+                this.put("device", "27029947555");
             }
         };
 
@@ -121,8 +129,8 @@ public class TestHttp {
 
         Map map = new HashMap() {
             {
-                this.put("token", "9e19fabe-d9bc-471e-b59a-7c5940a09b16");
-                this.put("device", "002B001A3236510C38373939");
+                this.put("token", "2F129817F7FE40708B6E70FD15F13693");
+                this.put("device", "1000094");
             }
         };
 
@@ -143,8 +151,8 @@ public class TestHttp {
 
         Map map = new HashMap() {
             {
-                this.put("token", "2c44ab47-ac29-4069-84cb-539d38a4af3b");
-                this.put("device", "002B001A3236510C38373939");
+                this.put("token", "EB085BE944DF44D9B65F71C9E1BF2B77");
+                this.put("device", "27029947555");
                 this.put("temperature", "10");
                 this.put("capacities", "10,20,30");
             }

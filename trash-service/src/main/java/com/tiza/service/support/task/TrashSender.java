@@ -35,7 +35,7 @@ public class TrashSender extends SendThread {
     @Override
     public void run() {
         try {
-            String token = callInfo.getToken();
+            String token = callInfo.fetchToken();
             if (StringUtils.isEmpty(token)) {
                 log.info("票据获取失败!");
                 return;
