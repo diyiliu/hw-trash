@@ -223,7 +223,25 @@ public class TrashProcess extends HwDataProcess {
             return;
         }
 
+        // XJ6000 设备状态信息上传
+        if (0x3C == cmd) {
+            double hDeg = CommonUtil.keepDecimal(buf.readUnsignedShort() - 10000, 0.1, 1);
+            double vDeg = CommonUtil.keepDecimal(buf.readUnsignedShort() - 10000, 0.1, 1);
 
+            // 横轴角度
+            param.put("hDeg", hDeg);
+            // 纵轴角度
+            param.put("vDeg", vDeg);
+            // 垃圾满溢标识
+            param.put("overflow", buf.readByte());
+            hwHeader.setParamMap(param);
+
+            Object[] args = new Object[]{terminalId, JacksonUtil.toJson(param), gwTime};
+            String sql = "INSERT INTO trashcan_work_param_log(ter_no, work_param, gw_time) VALUES (?,  ?, ?)";
+            jdbcTemplate.update(sql, args);
+
+            return;
+        }
     }
 
     @Override
@@ -233,7 +251,7 @@ public class TrashProcess extends HwDataProcess {
 
         byte[] startBytes = hwHeader.getStartBytes();
 
-        if (0x03 == cmd || 0x06 == cmd || 0x07 == cmd) {
+        if (0x03 == cmd || 0x06 == cmd || 0x07 == cmd || 0x3C == cmd) {
             ByteBuf buf = Unpooled.copiedBuffer(startBytes, new byte[]{(byte) cmd, 0x01, 0x01});
             return combine(buf.array());
         }

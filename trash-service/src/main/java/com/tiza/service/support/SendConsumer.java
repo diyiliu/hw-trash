@@ -14,6 +14,7 @@ import kafka.consumer.KafkaStream;
 import kafka.javaapi.consumer.ConsumerConnector;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.beanutils.BeanUtils;
+import org.apache.commons.collections.CollectionUtils;
 import org.apache.commons.io.FileUtils;
 import org.apache.commons.lang3.StringUtils;
 import org.springframework.beans.factory.annotation.Value;
@@ -94,11 +95,8 @@ public class SendConsumer extends Thread {
                 SendData sendData = JacksonUtil.toObject(text, SendData.class);
                 Map data = sendData.getData();
 
+                String terminal = sendData.getTerminal();
                 String unitId = sendData.getOwner();
-                if (StringUtils.isEmpty(unitId)) {
-                    log.info("设备[{}]机构信息不存在!", sendData.getTerminal());
-                    continue;
-                }
 
                 // 协议类型
                 String terminalType = "";
@@ -110,13 +108,15 @@ public class SendConsumer extends Thread {
                     terminalType = protocolGb32960;
                 }
 
-
                 // 设备类型
                 String trashType = (String) data.get("trashType");
                 // 垃圾箱
                 if ("trash-bin".equals(trashType)) {
-                    List list = (List) callInfoProvider.get("bin");
-                    CallInfo callInfo = fetchCallInfo(list, unitId);
+                    CallInfo callInfo = fetchCallInfo("bin", unitId);
+                    if (callInfo == null){
+                        log.warn("设备[{}]机构[{}]信息异常", terminal, unitId);
+                        continue;
+                    }
 
                     TrashSender trashSender = new TrashSender(tStarClient, trashProcess);
                     trashSender.setTerminalType(terminalType);
@@ -129,9 +129,11 @@ public class SendConsumer extends Thread {
 
                 // 发放袋
                 if ("trash-bag".equals(trashType)) {
-                    List list = (List) callInfoProvider.get("bag");
-
-                    CallInfo callInfo = fetchCallInfo(list, unitId);
+                    CallInfo callInfo = fetchCallInfo("bag", unitId);
+                    if (callInfo == null){
+                        log.warn("设备[{}]机构[{}]信息异常", terminal, unitId);
+                        continue;
+                    }
 
                     BagSender bagSender = new BagSender(tStarClient, bagProcess);
                     bagSender.setTerminalType(terminalType);
@@ -167,32 +169,37 @@ public class SendConsumer extends Thread {
     /**
      * 获取设备接口数据
      *
-     * @param list
+     * @param type
      * @param key
      * @return
      */
-    public CallInfo fetchCallInfo(List list, String key) {
+    public CallInfo fetchCallInfo(String type, String key) {
         if (callMap.containsKey(key)) {
 
             return (CallInfo) callMap.get(key);
         }
+        List list = (List) callInfoProvider.get(type);
+        if (StringUtils.isEmpty(key) || CollectionUtils.isEmpty(list)){
+            return null;
+        }
 
-        CallInfo callInfo = new CallInfo();
         for (int i = 0; i < list.size(); i++) {
             Map map = (Map) list.get(i);
             String id = (String) map.get("key");
             try {
                 if (id.equals(key)) {
+                    CallInfo callInfo = new CallInfo();
                     BeanUtils.populate(callInfo, map);
+                    callMap.put(key, callInfo);
+
                     break;
                 }
             } catch (Exception e) {
                 e.printStackTrace();
             }
         }
-        callMap.put(key, callInfo);
 
-        return callInfo;
+        return null;
     }
 
     public void setConsumer(ConsumerConnector consumer) {

@@ -107,15 +107,15 @@ public class TestHttp {
 
         Map map = new HashMap() {
             {
-                this.put("type", "5");
-                this.put("auth", "QFLJ20000000000001016216");
+                this.put("type", "6");
+                this.put("auth", "QFLJ10000000000001016538");
                 this.put("data", list);
             }
         };
 
         Map param = new HashMap() {
             {
-                this.put("token", "6B9ABC4569EA437AB8941F7446AAB035");
+                this.put("token", "6DD2CFA926F3441FBB00BFB0D4258D6F");
                 this.put("device", "27029947555");
             }
         };
@@ -197,4 +197,17 @@ public class TestHttp {
         System.out.println(str);
     }
 
+    @Test
+    public void testGet() throws Exception{
+        String url = "http://192.168.1.180:9580/trashApi?act=123";
+        Map map = new HashMap() {
+            {
+                this.put("device", "002B001A3236510C38373939");
+                this.put("type", "2");
+                this.put("auth", "1000000000000229");
+            }
+        };
+
+        System.out.println(HttpUtil.getForString(url, map));
+    }
 }

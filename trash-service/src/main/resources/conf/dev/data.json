@@ -6,16 +6,16 @@
       "url": "http://47.107.166.242:8083",
       "appId": "sdkwijw",
       "appSecret": "4b93e958a900aea565a6a1582ce6ad81",
-      "tokenPath": "/token?",
+      "tokenPath": "/token",
       "tokenKey": "token"
     },
     {
       "name": "徐工博德尔",
       "key": "53944195384896",
-      "url": "http://192.168.1.180:9580/trashApi/",
+      "url": "http://192.168.1.180:9580/trashApi",
       "appId": "admin",
       "appSecret": "qwer1234",
-      "tokenPath": "/token?",
+      "tokenPath": "/token",
       "tokenKey": "token"
     }
   ],
@@ -26,7 +26,7 @@
       "url": "http://zfsh.gltin.com/services/index.php",
       "appId": "45293c0b2356873b",
       "appSecret": "ee5e2e7d30f37a832a3c5e7806365eee",
-      "tokenPath": "?action=ticket&",
+      "tokenPath": "?action=ticket",
       "tokenKey": "ticket"
     }
   ]
