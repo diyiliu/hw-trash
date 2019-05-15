@@ -169,7 +169,7 @@ public class TrashSender extends SendThread {
                 param.put("device", reqDevice);
 
                 List list = (List) data.get("binsFault");
-                json = HttpUtil.postWithJsonAndParameter(baseUrl + "/throwin", JacksonUtil.toJson(list), param);
+                json = HttpUtil.postWithJsonAndParameter(baseUrl + "/fault", JacksonUtil.toJson(list), param);
                 map = JacksonUtil.toObject(json, HashMap.class);
                 errcode = (int) map.get("errcode");
                 if (errcode == 0) {

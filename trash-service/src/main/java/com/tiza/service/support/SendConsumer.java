@@ -19,8 +19,6 @@ import org.apache.commons.io.FileUtils;
 import org.apache.commons.lang3.StringUtils;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.core.io.ClassPathResource;
-import org.springframework.core.io.FileSystemResourceLoader;
-import org.springframework.core.io.ResourceLoader;
 
 import javax.annotation.Resource;
 import java.io.File;
@@ -113,7 +111,7 @@ public class SendConsumer extends Thread {
                 // 垃圾箱
                 if ("trash-bin".equals(trashType)) {
                     CallInfo callInfo = fetchCallInfo("bin", unitId);
-                    if (callInfo == null){
+                    if (callInfo == null) {
                         log.warn("设备[{}]机构[{}]信息异常", terminal, unitId);
                         continue;
                     }
@@ -130,7 +128,7 @@ public class SendConsumer extends Thread {
                 // 发放袋
                 if ("trash-bag".equals(trashType)) {
                     CallInfo callInfo = fetchCallInfo("bag", unitId);
-                    if (callInfo == null){
+                    if (callInfo == null) {
                         log.warn("设备[{}]机构[{}]信息异常", terminal, unitId);
                         continue;
                     }
@@ -178,28 +176,31 @@ public class SendConsumer extends Thread {
 
             return (CallInfo) callMap.get(key);
         }
-        List list = (List) callInfoProvider.get(type);
-        if (StringUtils.isEmpty(key) || CollectionUtils.isEmpty(list)){
+
+        List<HashMap> list = (List) callInfoProvider.get(type);
+        if (StringUtils.isEmpty(key) || CollectionUtils.isEmpty(list)) {
+
             return null;
         }
 
-        for (int i = 0; i < list.size(); i++) {
-            Map map = (Map) list.get(i);
-            String id = (String) map.get("key");
-            try {
+        CallInfo callInfo = null;
+        try {
+            for (int i = 0; i < list.size(); i++) {
+                Map map = list.get(i);
+                String id = (String) map.get("key");
+
                 if (id.equals(key)) {
-                    CallInfo callInfo = new CallInfo();
+                    callInfo = new CallInfo();
                     BeanUtils.populate(callInfo, map);
                     callMap.put(key, callInfo);
-
                     break;
                 }
-            } catch (Exception e) {
-                e.printStackTrace();
             }
+        } catch (Exception e) {
+            e.printStackTrace();
         }
 
-        return null;
+        return callInfo;
     }
 
     public void setConsumer(ConsumerConnector consumer) {

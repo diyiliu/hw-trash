@@ -210,4 +210,12 @@ public class TestHttp {
 
         System.out.println(HttpUtil.getForString(url, map));
     }
+
+
+    @Test
+    public void testThrowin() throws Exception{
+        String url = "http://192.168.1.180:9580/trashApi/throwin?device=27029947555&token=0BFB40796DA0497F864CCCB51027A327";
+        String json = "{\"data\":[{\"after\":3.87,\"category\":0,\"weight\":0.0,\"before\":3.87},{\"after\":8.14,\"category\":1,\"weight\":0.0,\"before\":8.15}],\"auth\":\"QFLJ010000000000005344Xr\",\"type\":5}";
+        System.out.println(HttpUtil.postWithJson(url, json));
+    }
 }

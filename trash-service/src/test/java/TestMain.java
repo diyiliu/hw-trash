@@ -151,4 +151,28 @@ public class TestMain {
         str = new String(CommonUtil.hexStringToBytes(str));
         System.out.println(str);
     }
+
+
+    @Test
+    public void testEquals() throws Exception{
+        String json = "[{\"name\":\"中航环卫\",\"key\":\"569846236086009856\",\"url\":\"http://47.107.166.242:8083\",\"appId\":\"sdkwijw\",\"appSecret\":\"4b93e958a900aea565a6a1582ce6ad81\",\"tokenPath\":\"/token\",\"tokenKey\":\"token\"},\n" +
+                "{\"name\":\"徐工博德尔\",\"key\":\"53944195384896\",\"url\":\"http://192.168.1.180:9580/trashApi\",\"appId\":\"TZ999\",\"appSecret\":\"qwer1234\",\"tokenPath\":\"/token\",\"tokenKey\":\"token\"}]";
+
+        List list = JacksonUtil.toList(json, HashMap.class);
+
+        String key = "53944195384896";
+        for (int i = 0; i < list.size(); i++) {
+            Map map = (Map) list.get(i);
+            String id = String.valueOf(map.get("key"));
+            try {
+                if (id.equals(key)) {
+
+                    System.out.println(map.get("name"));
+                    break;
+                }
+            } catch (Exception e) {
+                e.printStackTrace();
+            }
+        }
+    }
 }

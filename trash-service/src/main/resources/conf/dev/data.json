@@ -13,7 +13,7 @@
       "name": "徐工博德尔",
       "key": "53944195384896",
       "url": "http://192.168.1.180:9580/trashApi",
-      "appId": "admin",
+      "appId": "TZ999",
       "appSecret": "qwer1234",
       "tokenPath": "/token",
       "tokenKey": "token"
