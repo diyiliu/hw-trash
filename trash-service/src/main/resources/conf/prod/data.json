@@ -8,6 +8,15 @@
       "appSecret": "4b93e958a900aea565a6a1582ce6ad81",
       "tokenPath": "/token?",
       "tokenKey": "token"
+    },
+    {
+      "name": "徐工博德尔",
+      "key": "53944195384896",
+      "url": "http://10.3.12.25:8081/trashApi",
+      "appId": "ITrash",
+      "appSecret": "trash123",
+      "tokenPath": "/token",
+      "tokenKey": "token"
     }
   ],
   "bag": [

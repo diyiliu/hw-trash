@@ -93,11 +93,11 @@ public class HwDataParse extends DataParseAdapter {
 
         // 协议类型
         String protocolType = "";
-        if (jt808Code.equals(protocol)){
+        if (jt808Code.equals(protocol)) {
             protocolType = "trash-jt808";
             respCmd = 0x8900;
         }
-        if (gb32960Code.equals(protocol)){
+        if (gb32960Code.equals(protocol)) {
             protocolType = "trash-gb32960";
             respCmd = cmd;
         }
@@ -116,6 +116,8 @@ public class HwDataParse extends DataParseAdapter {
 
                 hwDataProcess.parse(hwHeader.getContent(), hwHeader);
                 Map headerMap = hwHeader.getParamMap();
+
+                log.info("设备[{}]透传工况数据[{}]", terminalId, JacksonUtil.toJson(headerMap));
                 if (headerMap != null) {
                     Map param = new HashMap();
                     param.put("id", hwHeader.getCmd());

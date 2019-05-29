@@ -104,8 +104,8 @@ public class TrashProcess extends HwDataProcess {
             param.put("binsRange", list);
             hwHeader.setParamMap(param);
 
-            Object[] args = new Object[]{terminalId, temp, JacksonUtil.toJson(list), gwTime};
-            String sql = "INSERT INTO trashcan_work_param_log(ter_no, temperature, work_param, gw_time) VALUES (?, ?, ?, ?)";
+            Object[] args = new Object[]{terminalId, temp, JacksonUtil.toJson(param), gwTime};
+            String sql = "INSERT INTO trashcan_work_param_log(ter_no, work_param, gw_time) VALUES (?, ?, ?)";
             jdbcTemplate.update(sql, args);
 
             return;
