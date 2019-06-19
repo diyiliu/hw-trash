@@ -89,12 +89,14 @@ public class TrashSender extends SendThread {
                     for (Integer i : list) {
                         capacities += i + ",";
                     }
+
+                    capacities = capacities.substring(0, capacities.length() - 1);
                 }
 
                 param.put("token", token);
                 param.put("device", reqDevice);
                 param.put("temperature", temperature);
-                param.put("capacities", capacities.substring(0, capacities.length() - 1));
+                param.put("capacities", capacities);
 
                 json = HttpUtil.postForString(baseUrl + "/status", param);
                 map = JacksonUtil.toObject(json, HashMap.class);
