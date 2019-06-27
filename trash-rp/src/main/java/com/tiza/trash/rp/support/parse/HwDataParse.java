@@ -14,7 +14,6 @@ import com.tiza.trash.rp.support.model.SendData;
 import com.tiza.trash.rp.support.parse.process.BagProcess;
 import com.tiza.trash.rp.support.parse.process.TrashProcess;
 import com.tiza.trash.rp.support.util.KafkaUtil;
-import kafka.producer.KeyedMessage;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.lang3.StringUtils;
 import org.apache.storm.guava.collect.Lists;
@@ -99,7 +98,6 @@ public class HwDataParse extends DataParseAdapter {
 
         // 应答指令ID
         int respCmd = 0;
-
         // 协议类型
         String protocolType = "";
         if (jt808Code.equals(protocol)) {

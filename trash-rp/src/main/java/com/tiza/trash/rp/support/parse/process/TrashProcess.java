@@ -1,17 +1,20 @@
 package com.tiza.trash.rp.support.parse.process;
 
 import com.tiza.plugin.model.Header;
-import com.tiza.trash.rp.support.parse.HwDataProcess;
-import com.tiza.trash.rp.support.model.HwHeader;
 import com.tiza.plugin.util.CommonUtil;
-import com.tiza.plugin.util.JacksonUtil;
+import com.tiza.trash.rp.support.model.HwHeader;
+import com.tiza.trash.rp.support.parse.HwDataProcess;
 import io.netty.buffer.ByteBuf;
 import io.netty.buffer.Unpooled;
 import lombok.extern.slf4j.Slf4j;
+import org.apache.commons.collections.MapUtils;
 import org.springframework.stereotype.Service;
 
 import java.nio.charset.Charset;
-import java.util.*;
+import java.util.ArrayList;
+import java.util.HashMap;
+import java.util.List;
+import java.util.Map;
 
 /**
  * Description: TrashProcess
@@ -70,13 +73,10 @@ public class TrashProcess extends HwDataProcess {
     @Override
     public void parse(byte[] content, Header header) {
         HwHeader hwHeader = (HwHeader) header;
-        String terminalId = hwHeader.getTerminalId();
-        Date gwTime = new Date(hwHeader.getTime());
 
         Map param = new HashMap();
         int cmd = hwHeader.getCmd();
         ByteBuf buf = Unpooled.copiedBuffer(content);
-
         // 设备状态上传
         if (0x03 == cmd) {
             int tempFlag = buf.readByte();
@@ -102,17 +102,16 @@ public class TrashProcess extends HwDataProcess {
 
             param.put("temperature", temp);
             param.put("binsRange", list);
-            hwHeader.setParamMap(param);
 
+            /*
             Object[] args = new Object[]{terminalId, JacksonUtil.toJson(param), gwTime};
             String sql = "INSERT INTO trashcan_work_param_log(ter_no, work_param, gw_time) VALUES (?, ?, ?)";
             jdbcTemplate.update(sql, args);
-
             return;
+            */
         }
-
         // 用户信息查询
-        if (0x04 == cmd) {
+        else if (0x04 == cmd) {
             int authType = buf.readByte();
 
             int length = buf.readUnsignedByte();
@@ -123,16 +122,15 @@ public class TrashProcess extends HwDataProcess {
 
             param.put("authType", authType);
             param.put("authContent", authContent);
-            hwHeader.setParamMap(param);
 
+             /*
             Object[] args = new Object[]{terminalId, authType, authContent, gwTime};
             String sql = "INSERT INTO trashcan_card_log(ter_no, auth_type, auth_content, gw_time) VALUES (?, ?, ?, ?)";
             jdbcTemplate.update(sql, args);
-
             return;
+            */
         }
-
-        if (0x05 == cmd) {
+        else if (0x05 == cmd) {
             int authType = buf.readByte();
             int length = buf.readUnsignedByte();
 
@@ -146,7 +144,6 @@ public class TrashProcess extends HwDataProcess {
                 log.error("数据长度不足: [{}]", CommonUtil.bytesToStr(content));
                 return;
             }
-
             List list = new ArrayList();
             for (int i = 0; i < n; i++) {
 
@@ -166,20 +163,19 @@ public class TrashProcess extends HwDataProcess {
             param.put("authType", authType);
             param.put("authContent", authContent);
             param.put("binsWeight", list);
-            hwHeader.setParamMap(param);
 
+            /*
             Object[] args = new Object[]{terminalId, authType, authContent, n, JacksonUtil.toJson(list), gwTime};
             String sql = "INSERT INTO trashcan_card_pick_log(ter_no, auth_type, auth_content, channel_count, pick_content, gw_time) VALUES (?, ?, ?, ?, ?, ?)";
             jdbcTemplate.update(sql, args);
-
             return;
+            */
         }
-
-        if (0x06 == cmd) {
+        else if (0x06 == cmd) {
             int n = buf.readByte();
             if (buf.readableBytes() < n) {
-
                 log.error("数据长度不足: [{}]", CommonUtil.bytesToStr(content));
+                return;
             }
 
             List list = new ArrayList();
@@ -193,22 +189,19 @@ public class TrashProcess extends HwDataProcess {
                 map.put("fault", fault);
                 list.add(map);
                 */
-
                 list.add(fault);
             }
-
             param.put("binsFault", list);
-            hwHeader.setParamMap(param);
 
+            /*
             Object[] args = new Object[]{terminalId, n, JacksonUtil.toJson(list), gwTime};
             String sql = "INSERT INTO trashcan_fault_log(ter_no, channel_count, fault_content, gw_time) VALUES (?, ?, ?, ?)";
             jdbcTemplate.update(sql, args);
-
             return;
+            */
         }
-
         // 清理签到上传
-        if (0x07 == cmd) {
+        else if (0x07 == cmd) {
             int authType = buf.readByte();
 
             int length = buf.readUnsignedByte();
@@ -216,15 +209,11 @@ public class TrashProcess extends HwDataProcess {
             buf.readBytes(array);
 
             String authContent = new String(array);
-
             param.put("authType", authType);
             param.put("authContent", authContent);
-            hwHeader.setParamMap(param);
-            return;
         }
-
         // XJ6000 设备状态信息上传
-        if (0x3C == cmd) {
+        else if (0x3C == cmd) {
             double hDeg = CommonUtil.keepDecimal(buf.readUnsignedShort() - 10000, 0.1, 1);
             double vDeg = CommonUtil.keepDecimal(buf.readUnsignedShort() - 10000, 0.1, 1);
 
@@ -234,13 +223,20 @@ public class TrashProcess extends HwDataProcess {
             param.put("vDeg", vDeg);
             // 垃圾满溢标识
             param.put("overflow", buf.readByte());
-            hwHeader.setParamMap(param);
 
+            /*
             Object[] args = new Object[]{terminalId, JacksonUtil.toJson(param), gwTime};
             String sql = "INSERT INTO trashcan_work_param_log(ter_no, work_param, gw_time) VALUES (?,  ?, ?)";
             jdbcTemplate.update(sql, args);
-
             return;
+            */
+        }
+
+        if (MapUtils.isNotEmpty(param)){
+            param.put("gpsTime", hwHeader.getTime());
+            param.put("type", cmd);
+
+            hwHeader.setParamMap(param);
         }
     }
 
