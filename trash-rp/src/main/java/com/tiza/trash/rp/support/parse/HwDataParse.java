@@ -15,8 +15,10 @@ import com.tiza.trash.rp.support.parse.process.BagProcess;
 import com.tiza.trash.rp.support.parse.process.TrashProcess;
 import com.tiza.trash.rp.support.util.KafkaUtil;
 import lombok.extern.slf4j.Slf4j;
+import org.apache.commons.collections.MapUtils;
 import org.apache.commons.lang3.StringUtils;
 import org.apache.storm.guava.collect.Lists;
+import org.apache.storm.guava.collect.Maps;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.jdbc.core.JdbcTemplate;
 import org.springframework.stereotype.Service;
@@ -124,7 +126,7 @@ public class HwDataParse extends DataParseAdapter {
                 Map headerMap = hwHeader.getParamMap();
 
                 log.info("设备[{}]透传工况数据[{}]", terminalId, JacksonUtil.toJson(headerMap));
-                if (headerMap != null) {
+                if (MapUtils.isNotEmpty(headerMap)) {
                     Map param = new HashMap();
                     param.put("id", hwHeader.getCmd());
                     param.put("trashType", trashType);
@@ -146,7 +148,11 @@ public class HwDataParse extends DataParseAdapter {
                     // 更新工况表
                     updateWorkInfo(terminalId, headerMap);
                     // 写入kafka
-                    sendToTStar(String.valueOf(vehicleInfo.getId()), deviceData.getCmdId(), JacksonUtil.toJson(headerMap), deviceData.getTime(), workTopic);
+                    Map map = Maps.newHashMap();
+                    map.put("time", new Date(hwHeader.getTime()));
+                    map.put("type", hwHeader.getCmd());
+                    map.put("data", headerMap);
+                    sendToTStar(String.valueOf(vehicleInfo.getId()), deviceData.getCmdId(), JacksonUtil.toJson(map), deviceData.getTime(), workTopic);
                 }
             }
         } catch (Exception e) {

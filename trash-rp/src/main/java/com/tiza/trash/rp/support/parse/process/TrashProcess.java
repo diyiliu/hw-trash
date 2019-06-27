@@ -7,7 +7,6 @@ import com.tiza.trash.rp.support.parse.HwDataProcess;
 import io.netty.buffer.ByteBuf;
 import io.netty.buffer.Unpooled;
 import lombok.extern.slf4j.Slf4j;
-import org.apache.commons.collections.MapUtils;
 import org.springframework.stereotype.Service;
 
 import java.nio.charset.Charset;
@@ -170,8 +169,7 @@ public class TrashProcess extends HwDataProcess {
             jdbcTemplate.update(sql, args);
             return;
             */
-        }
-        else if (0x06 == cmd) {
+        } else if (0x06 == cmd) {
             int n = buf.readByte();
             if (buf.readableBytes() < n) {
                 log.error("数据长度不足: [{}]", CommonUtil.bytesToStr(content));
@@ -230,14 +228,11 @@ public class TrashProcess extends HwDataProcess {
             jdbcTemplate.update(sql, args);
             return;
             */
+        }else {
+            return;
         }
 
-        if (MapUtils.isNotEmpty(param)){
-            param.put("gpsTime", hwHeader.getTime());
-            param.put("type", cmd);
-
-            hwHeader.setParamMap(param);
-        }
+        hwHeader.setParamMap(param);
     }
 
     @Override
