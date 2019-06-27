@@ -2,9 +2,9 @@ package com.tiza.service.support;
 
 import com.tiza.plugin.cache.ICache;
 import com.tiza.plugin.util.JacksonUtil;
-import com.tiza.rp.support.model.SendData;
-import com.tiza.rp.support.parse.process.BagProcess;
-import com.tiza.rp.support.parse.process.TrashProcess;
+import com.tiza.trash.rp.support.model.SendData;
+import com.tiza.trash.rp.support.parse.process.BagProcess;
+import com.tiza.trash.rp.support.parse.process.TrashProcess;
 import com.tiza.service.support.client.TStarClientAdapter;
 import com.tiza.service.support.model.CallInfo;
 import com.tiza.service.support.task.BagSender;

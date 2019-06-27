@@ -2,8 +2,8 @@ package com.tiza.service.support.task.abs;
 
 import cn.com.tiza.tstar.datainterface.client.entity.ClientCmdSendResult;
 import com.tiza.plugin.util.CommonUtil;
-import com.tiza.rp.support.model.SendData;
-import com.tiza.rp.support.parse.HwDataProcess;
+import com.tiza.trash.rp.support.model.SendData;
+import com.tiza.trash.rp.support.parse.HwDataProcess;
 import com.tiza.service.support.client.TStarClientAdapter;
 import com.tiza.service.support.model.CallInfo;
 import lombok.extern.slf4j.Slf4j;

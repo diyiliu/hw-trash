@@ -1,7 +1,5 @@
-package com.tiza.rp.handler;
+package com.tiza.trash.rp.handler;
 
-import cn.com.tiza.earth4j.LocationParser;
-import cn.com.tiza.tstar.common.process.BaseHandle;
 import cn.com.tiza.tstar.common.process.RPTuple;
 import com.tiza.plugin.cache.ICache;
 import com.tiza.plugin.model.Gb32960Header;
@@ -9,6 +7,7 @@ import com.tiza.plugin.protocol.gb32960.Gb32960DataProcess;
 import com.tiza.plugin.util.CommonUtil;
 import com.tiza.plugin.util.JacksonUtil;
 import com.tiza.plugin.util.SpringUtil;
+import com.tiza.trash.rp.support.model.BaseParseHandle;
 import lombok.extern.slf4j.Slf4j;
 
 /**
@@ -18,12 +17,11 @@ import lombok.extern.slf4j.Slf4j;
  */
 
 @Slf4j
-public class Gb32960ParseHandler extends BaseHandle {
+public class Gb32960ParseHandler extends BaseParseHandle {
 
     @Override
-    public RPTuple handle(RPTuple rpTuple) throws Exception {
+    public RPTuple handle(RPTuple rpTuple) {
         log.info("终端[{}], 指令[{}]...", rpTuple.getTerminalID(), CommonUtil.toHex(rpTuple.getCmdID(), 2));
-
         ICache cmdCacheProvider = SpringUtil.getBean("cmdCacheProvider");
         Gb32960DataProcess process = (Gb32960DataProcess) cmdCacheProvider.get(rpTuple.getCmdID());
         if (process == null) {
@@ -33,35 +31,15 @@ public class Gb32960ParseHandler extends BaseHandle {
 
         // 解析消息头
         Gb32960Header header = (Gb32960Header) process.parseHeader(rpTuple.getMsgBody());
-        if (header == null) {
+        if (header != null) {
+            String terminal = header.getVin();
 
-            return null;
+            header.setGwTime(rpTuple.getTime());
+            if (parse(terminal, header.getContent(), header, process)) {
+                return rpTuple;
+            }
         }
 
-        String terminalId = header.getVin();
-        ICache vehicleInfoProvider = SpringUtil.getBean("vehicleInfoProvider");
-
-        //log.info("设备缓存: {}", JacksonUtil.toJson(vehicleInfoProvider.getKeys()));
-        // 验证设备是否绑定车辆
-        if (!vehicleInfoProvider.containsKey(terminalId)) {
-            log.warn("设备[{}]未绑定车辆信息!", terminalId);
-
-            return null;
-        }
-
-        header.setGwTime(rpTuple.getTime());
-        // 指令解析
-        process.parse(header.getContent(), header);
-
-        return rpTuple;
-    }
-
-    @Override
-    public void init() throws Exception {
-        // 加载地图数据，解析省市区
-        LocationParser.getInstance().init();
-
-        // 装载 Spring 容器
-        SpringUtil.init();
+        return null;
     }
 }

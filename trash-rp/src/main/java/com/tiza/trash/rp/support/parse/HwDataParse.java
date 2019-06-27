@@ -1,4 +1,4 @@
-package com.tiza.rp.support.parse;
+package com.tiza.trash.rp.support.parse;
 
 import cn.com.tiza.tstar.common.process.BaseHandle;
 import com.tiza.plugin.bean.VehicleInfo;
@@ -8,14 +8,16 @@ import com.tiza.plugin.model.Position;
 import com.tiza.plugin.model.adapter.DataParseAdapter;
 import com.tiza.plugin.util.CommonUtil;
 import com.tiza.plugin.util.JacksonUtil;
-import com.tiza.rp.support.model.HwHeader;
-import com.tiza.rp.support.model.SendData;
-import com.tiza.rp.support.parse.process.BagProcess;
-import com.tiza.rp.support.parse.process.TrashProcess;
-import kafka.javaapi.producer.Producer;
+import com.tiza.trash.rp.support.model.HwHeader;
+import com.tiza.trash.rp.support.model.KafkaMsg;
+import com.tiza.trash.rp.support.model.SendData;
+import com.tiza.trash.rp.support.parse.process.BagProcess;
+import com.tiza.trash.rp.support.parse.process.TrashProcess;
+import com.tiza.trash.rp.support.util.KafkaUtil;
 import kafka.producer.KeyedMessage;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.lang3.StringUtils;
+import org.apache.storm.guava.collect.Lists;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.jdbc.core.JdbcTemplate;
 import org.springframework.stereotype.Service;
@@ -33,6 +35,13 @@ import java.util.*;
 @Slf4j
 @Service
 public class HwDataParse extends DataParseAdapter {
+    private final List<String> canIds = Lists.newArrayList("AA");
+
+    @Value("${tstar.track.topic}")
+    private String trackTopic;
+
+    @Value("${tstar.work.topic}")
+    private String workTopic;
 
     @Resource
     private ICache vehicleInfoProvider;
@@ -45,9 +54,6 @@ public class HwDataParse extends DataParseAdapter {
 
     @Resource
     private JdbcTemplate jdbcTemplate;
-
-    @Resource
-    private Producer kafkaProducer;
 
     @Value("${kafka.send-topic}")
     private String sendTopic;
@@ -68,6 +74,9 @@ public class HwDataParse extends DataParseAdapter {
     public void detach(DeviceData deviceData) {
         String terminalId = deviceData.getDeviceId();
         byte[] bytes = deviceData.getBytes();
+        if (bytes == null || bytes.length < 1) {
+            return;
+        }
         long gwTime = deviceData.getTime();
         int cmd = deviceData.getCmdId();
 
@@ -101,7 +110,6 @@ public class HwDataParse extends DataParseAdapter {
             protocolType = "trash-gb32960";
             respCmd = cmd;
         }
-
         if (hwDataProcess == null) {
             log.info("设备类型异常: [{}]", vehType);
             return;
@@ -137,9 +145,10 @@ public class HwDataParse extends DataParseAdapter {
 
                     // 写入 kafka
                     sendToKafka(sendData);
-
                     // 更新工况表
-                    updateWorkInfo(hwHeader);
+                    updateWorkInfo(terminalId, headerMap);
+                    // 写入kafka
+                    sendToTStar(String.valueOf(vehicleInfo.getId()), deviceData.getCmdId(), JacksonUtil.toJson(headerMap), deviceData.getTime(), workTopic);
                 }
             }
         } catch (Exception e) {
@@ -159,15 +168,18 @@ public class HwDataParse extends DataParseAdapter {
                     String key = (String) iterator.next();
                     Object value = map.get(key);
 
+                    // 位置信息
                     if (key.equalsIgnoreCase("position")) {
                         Position position = (Position) value;
                         position.setTime(deviceData.getTime());
+                        position.setCmd(deviceData.getCmdId());
                         dealPosition(deviceData.getDeviceId(), position);
                     }
-
-                    if (key.equalsIgnoreCase("AA")) {
+                    // 透传数据
+                    if (canIds.contains(key)) {
                         byte[] bytes = (byte[]) value;
                         deviceData.setBytes(bytes);
+                        deviceData.setDataType(key);
 
                         detach(deviceData);
                     }
@@ -178,10 +190,17 @@ public class HwDataParse extends DataParseAdapter {
 
     public void sendToKafka(SendData sendData) {
         String terminal = sendData.getTerminal();
-
         String json = JacksonUtil.toJson(sendData);
-        kafkaProducer.send(new KeyedMessage(sendTopic, terminal, json));
+
+        KafkaUtil.send(new KafkaMsg(terminal, json, sendTopic));
         log.info("终端[{}]写入 kafka [{}]", terminal, json);
+    }
+
+    public void sendToTStar(String device, int cmd, String value, long time, String topic) {
+        byte[] bytes = CommonUtil.tstarKafkaArray(device, cmd, value, time, 0);
+        KafkaMsg msg = new KafkaMsg(device, bytes, topic);
+        msg.setTstar(true);
+        KafkaUtil.send(msg);
     }
 
     @Override
@@ -217,10 +236,11 @@ public class HwDataParse extends DataParseAdapter {
     /**
      * 更新当前位置信息
      *
-     * @param hwHeader
+     * @param terminal
+     * @param map
      */
-    public void updateWorkInfo(HwHeader hwHeader) {
-        VehicleInfo vehicleInfo = (VehicleInfo) vehicleInfoProvider.get(hwHeader.getTerminalId());
+    public void updateWorkInfo(String terminal, Map map) {
+        VehicleInfo vehicleInfo = (VehicleInfo) vehicleInfoProvider.get(terminal);
 
         String sql = "SELECT t.data_json  FROM serv_device_work t WHERE t.device_id=" + vehicleInfo.getId();
         String json = jdbcTemplate.queryForObject(sql, String.class);
@@ -235,7 +255,7 @@ public class HwDataParse extends DataParseAdapter {
             e.printStackTrace();
         }
         // 覆盖历史工况信息
-        workMap.putAll(hwHeader.getParamMap());
+        workMap.putAll(map);
 
         json = JacksonUtil.toJson(workMap);
         Object[] args = new Object[]{json, new Date(), vehicleInfo.getId()};

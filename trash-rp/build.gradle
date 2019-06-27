@@ -12,7 +12,7 @@ repositories {
 }
 
 dependencies {
-    compile fileTree(dir: project(':tstar-plugin').projectDir.path + "/libs/tstar-rp", include: "**/*.jar")
+    compileOnly fileTree(dir: project(':tstar-plugin').projectDir.path + "/libs/tstar-rp", include: "**/*.jar")
     compile project(':tstar-plugin')
 
     compile group: 'com.alibaba', name: 'druid', version: '1.1.12'
@@ -26,12 +26,12 @@ tasks.withType(JavaCompile) {
 
 // 拷贝文件(排除项目自带jar)
 task copyJar(type: Copy) {
-    from configurations.runtime
+    from configurations.compile
     into "$buildDir/dist"
 
     exclude {
-        !it.file.name.contains('tstar-plugin') && 
-                !it.file.name.contains('earth4j') && 
+        !it.file.name.contains('tstar-plugin') &&
+                !it.file.name.contains('earth4j') &&
                 it.file.path.contains('libs\\tstar')
     }
 }
@@ -44,10 +44,10 @@ task copyConf(type: Copy) {
 
 
 jar {
-//    archiveName = 'trash_jt808.jar'
+    archiveName = 'trash_jt808.jar'
 //    archiveName = 'trash_gb32960.jar'
 //    archiveName = 'mstar_gb32960.jar'
-    archiveName = 'mstar_jt808.jar'
+//    archiveName = 'mstar_jt808.jar'
 
     from {
         File srcDir = file("$buildDir/dist")
@@ -59,10 +59,10 @@ jar {
 jar.dependsOn(copyJar)
 
 task zip(type: Zip, dependsOn: [jar, copyConf]) {
-//    archiveName = 'trash_jt808.zip'
+    archiveName = 'trash_jt808.zip'
 //    archiveName = 'trash_gb32960.zip'
 //    archiveName = 'mstar_gb32960.zip'
-    archiveName = 'mstar_jt808.zip'
+//    archiveName = 'mstar_jt808.zip'
     
     from 'build/libs'
 }

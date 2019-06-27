@@ -1,4 +1,4 @@
-package com.tiza.rp.support.model;
+package com.tiza.trash.rp.support.model;
 
 import com.tiza.plugin.model.Header;
 import lombok.Data;

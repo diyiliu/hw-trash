@@ -1,8 +1,8 @@
-package com.tiza.rp.support.parse.process;
+package com.tiza.trash.rp.support.parse.process;
 
 import com.tiza.plugin.model.Header;
-import com.tiza.rp.support.parse.HwDataProcess;
-import com.tiza.rp.support.model.HwHeader;
+import com.tiza.trash.rp.support.parse.HwDataProcess;
+import com.tiza.trash.rp.support.model.HwHeader;
 import com.tiza.plugin.util.CommonUtil;
 import com.tiza.plugin.util.JacksonUtil;
 import io.netty.buffer.ByteBuf;
@@ -104,7 +104,7 @@ public class TrashProcess extends HwDataProcess {
             param.put("binsRange", list);
             hwHeader.setParamMap(param);
 
-            Object[] args = new Object[]{terminalId, temp, JacksonUtil.toJson(param), gwTime};
+            Object[] args = new Object[]{terminalId, JacksonUtil.toJson(param), gwTime};
             String sql = "INSERT INTO trashcan_work_param_log(ter_no, work_param, gw_time) VALUES (?, ?, ?)";
             jdbcTemplate.update(sql, args);
 

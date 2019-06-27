@@ -1,4 +1,4 @@
-package com.tiza.rp.support.task;
+package com.tiza.trash.rp.support.task;
 
 import com.tiza.plugin.bean.VehicleInfo;
 import com.tiza.plugin.cache.ICache;

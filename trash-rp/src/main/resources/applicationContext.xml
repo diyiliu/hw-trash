@@ -8,8 +8,7 @@
            http://www.springframework.org/schema/context/spring-context.xsd ">
 
     <!-- 开启注解扫描 -->
-    <context:component-scan base-package="com.tiza.rp,com.tiza.plugin.protocol.*"/>
-
+    <context:component-scan base-package="com.tiza.trash.rp,com.tiza.plugin.protocol.*"/>
     <!-- 加载配置文件 -->
     <context:property-placeholder location="classpath:config/${env}.properties"/>
 
