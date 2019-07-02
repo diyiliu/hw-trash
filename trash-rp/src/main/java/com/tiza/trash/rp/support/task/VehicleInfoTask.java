@@ -39,18 +39,20 @@ public class VehicleInfoTask implements ITask {
 
         String sql = "SELECT   " +
                 "  `d`.`id` vehId,  " +
-                "  `t`.`terminal_no` terminal,  " +
+                "  `t`.`terminal_no` terminal," +
                 "  `t`.`protocol_type` protocol," +
                 "  `d`.`hardware_type` vehType, " +
                 "  `su`.`id` unitId, " +
+                "  `iu`.`interface_id` owner, " +
                 "  `su`.`unit_name` unitName " +
                 "FROM  " +
-                "  `biz_terminal` t   " +
-                "  INNER JOIN `biz_device` d   " +
-                "    ON `d`.`terminal_no` = `t`.`terminal_no`   " +
-                "    AND `d`.`is_deleted` = 0   " +
-                "  LEFT JOIN `sys_unit` su " +
-                "    ON `su`.`id` = `d`.`unit_id` " +
+                "   `biz_terminal` t " +
+                "  INNER JOIN `biz_device` d " +
+                "    ON `d`.`terminal_no` = `t`.`terminal_no` AND `d`.`is_deleted` = 0 " +
+                "  LEFT JOIN `sys_unit` su  ON `su`.`id` = `d`.`unit_id` " +
+                "  LEFT JOIN (SELECT iu.* FROM `sys_interface_unit_rel` iu" +
+                "  INNER JOIN `sys_interface` it ON `it`.`interface_id` = `iu`.`interface_id` AND `it`.`is_deleted` = 0 ) iu" +
+                "  ON `iu`.`unit_id` = `su`.`id` " +
                 "WHERE `t`.`is_deleted` = 0 ";
 
         List<VehicleInfo> vehicleInfos = jdbcTemplate.query(sql, new RowMapper<VehicleInfo>() {
@@ -61,7 +63,7 @@ public class VehicleInfoTask implements ITask {
                 vehicleInfo.setTerminalId(rs.getString("terminal"));
                 vehicleInfo.setVehType(rs.getInt("vehType"));
                 vehicleInfo.setProtocol(rs.getString("protocol"));
-                vehicleInfo.setOwner(rs.getString("unitId"));
+                vehicleInfo.setOwner(rs.getString("owner"));
                 vehicleInfo.setOwnerName(rs.getString("unitName"));
 
                 return vehicleInfo;
